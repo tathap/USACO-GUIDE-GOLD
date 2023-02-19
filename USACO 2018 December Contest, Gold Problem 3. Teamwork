@@ -1,0 +1,157 @@
+USACO 2018 December Contest, Gold
+Problem 3. Teamwork
+
+Code:
+//#include <bits/stdc++.h>
+//#include <ext/pb_ds/assoc_container.hpp>
+//using namespace __gnu_pbds;
+#include <iostream>
+#include <fstream>
+#include <algorithm>
+#include <vector>
+#include <stack>
+#include <queue>
+#include <math.h>
+#include <set>
+#include <map>
+#include <string>
+#include <tuple>
+#include <numeric>
+#include <climits>
+#include <bitset>
+#include <iomanip>
+#include <random>
+#include <ctime>
+
+using namespace std;
+
+//change the long long to int if you need to save memory/time really badly
+typedef long long ll;
+
+//Comment this define when working on interactive problems
+#define endl "\n"
+#define sqrt(n) sqrt((long double) n)
+
+const ll MAXN = 5e5 + 5;
+const ll ZER = 0;
+const ll ONE = 1;
+const ll INF = LLONG_MAX;
+const ll MOD = 998244353;
+
+ll min(ll a, ll b) {
+    if (a < b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+ 
+ll max(ll a, ll b) {
+    if (a > b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+
+ll mod(ll num) {
+    return (num >= MOD ? num % MOD : num);
+}
+
+ll __gcd(ll a, ll b) {
+    if (b == 0) {
+        return a;
+    }
+    
+    if (a == 0) {
+        return b;
+    }
+    
+    if (a < b) {
+        swap(a, b);
+    }
+    
+    return __gcd(b, a % b);
+}
+
+ll __lcm(ll a, ll b) {
+    ll prod = a*b;
+    return prod/__gcd(a, b);
+}
+
+ll powmod(ll a, ll b){
+    a %= MOD;
+    if (a == 0) return 0;
+    ll product = 1;
+    while(b > 0){
+        if (b&1){    // you can also use b % 2 == 1
+            product *= a;
+            product %= MOD;
+            --b;
+        }
+        a *= a;
+        a %= MOD;
+        b /= 2;    // you can also use b >> 1
+    }
+    return product;
+}
+
+
+//calculates the inverse of a number mod MOD
+ll inv(ll a) {
+    return powmod(a, MOD - 2);
+}
+
+void solve(ll ca)
+{
+    ll n, k;
+    cin >> n >> k;
+    
+    ll cow[n];
+    for (ll i = 0; i < n; i++) {
+        cin >> cow[i];
+    }
+    
+    ll dp[n+1]; //dp[i] is the best sum of skill levels assuming we use the first i cows
+    dp[0] = 0; //base case: If we don't use any cows, then the sum of skill levels is 0
+
+    //To compute dp[i], we will iterate over all positions j < i such that we can put j+1, j+2, . . . i into their own team. We'll need to make sure that the length of this team is <= k and we'll also need to maintain our running maximum skil level
+    for (ll i = 1; i <= n; i++) {
+        ll maxi = 0; //maintain the current max value
+        dp[i] = 0; //set the dp value to smth low
+        
+        //Iterate over all endings of previous groups while making sure that the current team has <= k cows
+        for (ll j = i-1; j >= max(0, i-k); j--) {
+            //Update maximum and use the best answer for dp
+            maxi = max(maxi, cow[j]);
+            dp[i] = max(dp[i], dp[j] + maxi*(i-j));
+        }
+    }
+    
+    cout << dp[n] << endl;
+    
+    return;
+}
+
+int main()
+{
+    //mt19937 rng(0);
+    
+    //Fast IO
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    freopen("teamwork.in", "r", stdin);
+    freopen("teamwork.out", "w", stdout);
+    
+    ll t = 1;
+    //cin >> t;
+
+    ll co = 1;
+    while (t--) {
+        solve(co);
+        ++co;
+    }
+}
+
+//Always write your algorithm down on a piece of paper and question EACH and EVERY step if you aren't able to find an implementation mistake in your code.

@@ -1,0 +1,188 @@
+USACO 2018 February Contest, Gold
+Problem 3. Taming the Herd
+
+Code:
+//#include <bits/stdc++.h>
+//#include <ext/pb_ds/assoc_container.hpp>
+//using namespace __gnu_pbds;
+#include <iostream>
+#include <fstream>
+#include <algorithm>
+#include <vector>
+#include <stack>
+#include <queue>
+#include <math.h>
+#include <set>
+#include <map>
+#include <string>
+#include <tuple>
+#include <numeric>
+#include <climits>
+#include <bitset>
+#include <iomanip>
+#include <random>
+#include <ctime>
+
+using namespace std;
+
+//change the long long to int if you need to save memory/time really badly
+typedef long long ll;
+
+//Comment this define when working on interactive problems
+#define endl "\n"
+#define sqrt(n) sqrt((long double) n)
+
+const ll MAXN = 5e5 + 5;
+const ll ZER = 0;
+const ll ONE = 1;
+const ll INF = LLONG_MAX;
+const ll MOD = 998244353;
+
+ll min(ll a, ll b) {
+    if (a < b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+ 
+ll max(ll a, ll b) {
+    if (a > b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+
+ll mod(ll num) {
+    return (num >= MOD ? num % MOD : num);
+}
+
+ll __gcd(ll a, ll b) {
+    if (b == 0) {
+        return a;
+    }
+    
+    if (a == 0) {
+        return b;
+    }
+    
+    if (a < b) {
+        swap(a, b);
+    }
+    
+    return __gcd(b, a % b);
+}
+
+ll __lcm(ll a, ll b) {
+    ll prod = a*b;
+    return prod/__gcd(a, b);
+}
+
+ll powmod(ll a, ll b){
+    a %= MOD;
+    if (a == 0) return 0;
+    ll product = 1;
+    while(b > 0){
+        if (b&1){    // you can also use b % 2 == 1
+            product *= a;
+            product %= MOD;
+            --b;
+        }
+        a *= a;
+        a %= MOD;
+        b /= 2;    // you can also use b >> 1
+    }
+    return product;
+}
+
+
+//calculates the inverse of a number mod MOD
+ll inv(ll a) {
+    return powmod(a, MOD - 2);
+}
+
+void solve(ll ca)
+{
+    //Read in input
+    ll n; cin >> n;
+    ll a[n];
+    for (ll i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    
+    ll dp[n][n]; //dp[i][j] is the minimum number of inconsistent log entries using the first i+1 log entries and having j+1 breakouts
+    for (ll j = 0; j < n; j++) {
+        for (ll k = 0; k < n; k++) {
+            dp[j][k] = 700; //Initialize everything to a big number. Not big enough for overflow tho!
+        }
+    }
+            
+    //The #of inconsistent log entries using the first cow and having 1 breakout is 1 if it's value is not 0 and 0 if it's value is 0.
+    dp[0][0] = (a[0] == 0) ? 0 : 1;
+    
+    //Compute the dp states
+    for (ll j = 1; j < n; j++) {
+        for (ll k = 0; k < n; k++) {
+            //If k == 0, then we can manually compare everything and compute the differences in linear time
+            if (k == 0) {
+                dp[j][k] = j+1;
+                for (ll l = 0; l <= j; l++) {
+                    if (l == a[l]) { //This checks to make sure that the calendar denotes a breakout on day 1
+                        dp[j][k]--;
+                    }
+                }
+            } else {
+                //If j >= k, then it's possible to have k+1 breakouts in the first j+1 days. We can then initialize dp[j][k] to the worst case, where all of the calendars are incorrect. Otherwise, we can't do anything and we move on.
+                if (j >= k) {
+                    dp[j][k] = j+1;
+                } else {
+                    continue;
+                }
+                
+                //ma[i] stores the #of calendars that correspond to a breakout at day i
+                map<ll, ll> ma;
+                for (ll l = j; l > 0; l--) {
+                    ma[l-a[l]]++; //A calendar marked a[l] at day l means that a breakout occurred at l - a[l] according to the calendar
+                    
+                    //Update dp[j][k] while using the information from ma if possible
+                    if (ma.find(l) == ma.end()) {
+                        dp[j][k] = min(dp[j][k], dp[l-1][k-1] + (j-l+1));
+                    } else {
+                        dp[j][k] = min(dp[j][k], dp[l-1][k-1] + (j-l+1-ma[l]));
+                    }
+                }
+            }
+        }
+    }
+        
+    //Print the answer
+    for (ll i = 0; i < n; i++) {
+        cout << dp[n-1][i] << endl;
+    }
+    
+    return;
+}
+
+int main()
+{
+    //mt19937 rng(0);
+    
+    //Fast IO
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    freopen("taming.in", "r", stdin);
+    freopen("taming.out", "w", stdout);
+    
+    ll t = 1;
+    //cin >> t;
+
+    ll co = 1;
+    while (t--) {
+        solve(co);
+        ++co;
+    }
+}
+
+//Always write your algorithm down on a piece of paper and question EACH and EVERY step if you aren't able to find an implementation mistake in your code.

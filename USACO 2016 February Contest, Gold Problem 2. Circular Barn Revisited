@@ -1,0 +1,202 @@
+USACO 2016 February Contest, Gold
+Problem 2. Circular Barn Revisited
+
+Code:
+//#include <bits/stdc++.h>
+//#include <ext/pb_ds/assoc_container.hpp>
+//using namespace __gnu_pbds;
+#include <iostream>
+#include <fstream>
+#include <algorithm>
+#include <vector>
+#include <stack>
+#include <queue>
+#include <math.h>
+#include <set>
+#include <map>
+#include <string>
+#include <tuple>
+#include <numeric>
+#include <climits>
+#include <bitset>
+#include <iomanip>
+#include <random>
+#include <ctime>
+
+using namespace std;
+
+//change the long long to int if you need to save memory/time really badly
+typedef long long ll;
+
+//Comment this define when working on interactive problems
+#define endl "\n"
+#define sqrt(n) sqrt((long double) n)
+
+const ll MAXN = 5e5 + 5;
+const ll ZER = 0;
+const ll ONE = 1;
+const ll INF = LLONG_MAX;
+const ll MOD = 998244353;
+
+ll min(ll a, ll b) {
+    if (a < b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+ 
+ll max(ll a, ll b) {
+    if (a > b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+
+ll mod(ll num) {
+    return (num >= MOD ? num % MOD : num);
+}
+
+ll __gcd(ll a, ll b) {
+    if (b == 0) {
+        return a;
+    }
+    
+    if (a == 0) {
+        return b;
+    }
+    
+    if (a < b) {
+        swap(a, b);
+    }
+    
+    return __gcd(b, a % b);
+}
+
+ll __lcm(ll a, ll b) {
+    ll prod = a*b;
+    return prod/__gcd(a, b);
+}
+
+ll powmod(ll a, ll b){
+    a %= MOD;
+    if (a == 0) return 0;
+    ll product = 1;
+    while(b > 0){
+        if (b&1){    // you can also use b % 2 == 1
+            product *= a;
+            product %= MOD;
+            --b;
+        }
+        a *= a;
+        a %= MOD;
+        b /= 2;    // you can also use b >> 1
+    }
+    return product;
+}
+
+
+//calculates the inverse of a number mod MOD
+ll inv(ll a) {
+    return powmod(a, MOD - 2);
+}
+
+//Algorithm: Note that if we unlock k exterior doors, the barn will be split up into k sections. It's then optimal for the room with the exterior door to bring in all the cows that will fill up that section. Note that each section consists of a room with an opened exterior door followed by a succession of rooms with unopened exterior doors in clockwise order.
+
+//Implementation Trick. What we can do is iterate over the room whose exterior door we will open first. Then the circle will collapse into a line, which will make implementation easier.
+void solve(ll ca)
+{
+    ll n, k;
+    cin >> n >> k;
+    
+    ll r[n];
+    for (ll i = 0; i < n; i++) {
+        cin >> r[i];
+    }
+    
+    ll dp[n][n][n]; //dp[i][j][k] is the minimum amount of distance cows need to travel to fulfill all the rooms from order[j] to order[k] inclusive assuming that the first opened door is room i. In addition order[l] for some l is defined to be the room that you reach moving l units past room i clockwise, which is the first room with its exterior door opened, like we had defined.
+     
+    //Iterate over all rooms which we can use to open the first exterior door
+    for (ll i = 0; i < n; i++) {
+        //Compute the order, the list of indices of rooms assuming we start at room i. In this way, we compress the circular structure of the barn into a line
+        ll order[n];
+        for (ll cnt = 0; cnt < n; cnt++) {
+            order[cnt] = (i+cnt)%n;
+        }
+        
+        //Now fix the room which will have an exterior door open, iterate over all the possible ending points, and compute the distance such that if cows are dumped into room order[start], then all the rooms from order[start] to order[end] are filled.
+        for (ll start = 0; start < n; start++) {
+            dp[i][start][start] = 0;
+            for (ll end = start+1; end < n; end++) {
+                dp[i][start][end] = dp[i][start][end-1] + (end-start)*r[order[end]];
+            }
+        }
+    }
+    
+    //Minimum total distance needed
+    ll ans = INF;
+    
+    //Once again, iterate over all rooms which we can use to open the first exterior door
+    for (ll i = 0; i < n; i++) {
+        //Compute the order, the list of indices of rooms assuming we start at room i. In this way, we compress the circular structure of the barn into a line
+        ll order[n];
+        for (ll cnt = 0; cnt < n; cnt++) {
+            order[cnt] = (i+cnt)%n;
+        }
+        
+        ll dp2[n][k]; //dp2[a][b] is the minimum total distance using the first a rooms clockwise starting from the start room i inclusive using j+1 sections
+        
+        //The base case is when the answer is 0 when we are only looking at the first room whose door has been opened
+        for (ll l = 0; l < k; l++) {
+            dp2[0][l] = 0;
+        }
+        
+        //Iterate over the current room and the current number of sections needed
+        for (ll start = 1; start < n; start++) {
+            for (ll l = 0; l < k; l++) {
+                //If we only have 1 sections, you can check the previous location's answer using only 1 group and update it.
+                if (l == 0) {
+                    dp2[start][l] = dp2[start-1][l] + start*r[order[start]];
+                } else {
+                    //We can iterate over the end of a previous section and then add the cost for a new section in the middle using the dp array we precomputed
+                    dp2[start][l] = INF;
+                    for (ll pstart = start-1; pstart >= 0; pstart--) {
+                        dp2[start][l] = min(dp2[start][l], dp2[pstart][l-1] + dp[i][pstart+1][start]);
+                    }
+                }
+            }
+        }
+        
+        //We'll get the best answer using all the n rooms if we have k sections
+        ans = min(ans, dp2[n-1][k-1]);
+    }
+    
+    //Print the answer
+    cout << ans << endl;
+    
+    return;
+}
+
+int main()
+{
+    //mt19937 rng(0);
+    
+    //Fast IO
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    freopen("cbarn2.in", "r", stdin);
+    freopen("cbarn2.out", "w", stdout);
+    
+    ll t = 1;
+    //cin >> t;
+
+    ll co = 1;
+    while (t--) {
+        solve(co);
+        ++co;
+    }
+}
+
+//Always write your algorithm down on a piece of paper and question EACH and EVERY step if you aren't able to find an implementation mistake in your code.

@@ -1,0 +1,211 @@
+USACO 2019 US Open Contest, Gold
+Problem 1. Snakes
+
+Code:
+//#include <bits/stdc++.h>
+//#include <ext/pb_ds/assoc_container.hpp>
+//using namespace __gnu_pbds;
+#include <iostream>
+#include <fstream>
+#include <algorithm>
+#include <vector>
+#include <stack>
+#include <queue>
+#include <math.h>
+#include <set>
+#include <map>
+#include <string>
+#include <tuple>
+#include <numeric>
+#include <climits>
+#include <bitset>
+#include <iomanip>
+#include <random>
+#include <ctime>
+
+using namespace std;
+
+//change the long long to int if you need to save memory/time really badly
+typedef long long ll;
+
+//Comment this define when working on interactive problems
+#define endl "\n"
+#define sqrt(n) sqrt((long double) n)
+
+const ll MAXN = 5e5 + 5;
+const ll ZER = 0;
+const ll ONE = 1;
+//const ll INF = LLONG_MAX;
+const ll MOD = 998244353;
+
+ll min(ll a, ll b) {
+    if (a < b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+ 
+ll max(ll a, ll b) {
+    if (a > b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+
+ll mod(ll num) {
+    return (num >= MOD ? num % MOD : num);
+}
+
+ll __gcd(ll a, ll b) {
+    if (b == 0) {
+        return a;
+    }
+    
+    if (a == 0) {
+        return b;
+    }
+    
+    if (a < b) {
+        swap(a, b);
+    }
+    
+    return __gcd(b, a % b);
+}
+
+ll __lcm(ll a, ll b) {
+    ll prod = a*b;
+    return prod/__gcd(a, b);
+}
+
+ll powmod(ll a, ll b){
+    a %= MOD;
+    if (a == 0) return 0;
+    ll product = 1;
+    while(b > 0){
+        if (b&1){    // you can also use b % 2 == 1
+            product *= a;
+            product %= MOD;
+            --b;
+        }
+        a *= a;
+        a %= MOD;
+        b /= 2;    // you can also use b >> 1
+    }
+    return product;
+}
+
+
+//calculates the inverse of a number mod MOD
+ll inv(ll a) {
+    return powmod(a, MOD - 2);
+}
+
+//Observation: Note that it's always optimal for our net size to be one of the values in the array. Therefore, we have at most 400 net sizes we really need to check
+void solve(ll ca)
+{
+    ll n, k;
+    cin >> n >> k;
+    
+    ll a[n+1];
+    for (ll i = 1; i <= n; i++) {
+        cin >> a[i];
+    }
+    
+    //dp[i][j] is the minimum total wasted space with current net size a[i] and j changes made. We will use the rolling arrays technique to save memory space by only storing this dp array for the previous index of the current index we're checking
+    ll dp[n+1][k+1];
+    for (ll i = 1; i <= n; i++) {
+        for (ll j = 0; j <= k; j++) {
+            dp[i][j] = 0;
+        }
+    }
+    
+    //big nubmer that isn't big enough to cause integer overflow
+    ll bignumb = 1e12;
+    
+    ll ps[k+1]; //ps[i] is the minimum of dp[a][i] for all a where a is the index of the size of the net and i is the #of changes
+    for (ll i = 0; i <= k; i++) {
+        ps[i] = 0;
+    }
+    
+    //Iterate over all the indices
+    for (ll ind = 1; ind <= n; ind++) {
+        //Second dp array that we'll use for the rolling arrays technique
+        ll dp2[n+1][k+1];
+        
+        //Compute dp2
+        for (ll j = 1; j <= n; j++) {
+            for (ll l = 0; l <= k; l++) {
+                //intialize the current dp value to be a super big number
+                dp2[j][l] = bignumb;
+                
+                //If we can't catch all the snakes with our current net, we'll leave the dp2 value of this state to be a big number
+                if (a[j] < a[ind]) {
+                    continue;
+                }
+                
+                //2 cases
+                
+                //Case 1: We switch our net size from the previous index if we've made at least 1 change
+                if (l != 0) {
+                    //ps[l-1] stores the state at the previous index with the minimum amount of wasted space
+                    dp2[j][l] = min(dp2[j][l], ps[l-1] + a[j] - a[ind]);
+                }
+                
+                //Case 2: We don't switch our net size from the previous index
+                dp2[j][l] = min(dp2[j][l], dp[j][l] + a[j] - a[ind]); //Add a[j] - a[ind] to update the amount of wasted space
+            }
+        }
+        
+        //Replace dp with dp2
+        for (ll j = 1; j <= n; j++) {
+            for (ll l = 0; l <= k; l++) {
+                dp[j][l] = dp2[j][l];
+            }
+        }
+        
+        //Update ps
+        for (ll l = 0; l <= k; l++) {
+            ps[l] = bignumb;
+            for (ll j = 1; j <= n; j++) {
+                ps[l] = min(ps[l], dp[j][l]);
+            }
+        }
+    }
+
+    //Print the lowest amount of wasted space
+    ll ans = bignumb;
+    for (ll i = 1; i <= n; i++) {
+        for (ll j = 0; j <= k; j++) {
+            ans = min(ans, dp[i][j]);
+        }
+    }
+    
+    cout << ans << endl;
+    
+    return;
+}
+
+int main()
+{
+    //mt19937 rng(0);
+    
+    //Fast IO
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    freopen("snakes.in", "r", stdin);
+    freopen("snakes.out", "w", stdout);
+    
+    ll t = 1;
+    //cin >> t;
+
+    ll co = 1;
+    while (t--) {
+        solve(co);
+        ++co;
+    }
+}
+
+//Always write your algorithm down on a piece of paper and question EACH and EVERY step if you aren't able to find an implementation mistake in your code.

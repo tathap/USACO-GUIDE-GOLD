@@ -1,0 +1,184 @@
+USACO 2020 January Contest, Gold
+Problem 1. Time is Mooney
+
+Code:
+//#include <bits/stdc++.h>
+//#include <ext/pb_ds/assoc_container.hpp>
+//using namespace __gnu_pbds;
+#include <iostream>
+#include <fstream>
+#include <algorithm>
+#include <vector>
+#include <stack>
+#include <queue>
+#include <math.h>
+#include <set>
+#include <map>
+#include <string>
+#include <tuple>
+#include <numeric>
+#include <climits>
+#include <bitset>
+#include <iomanip>
+#include <random>
+#include <ctime>
+
+using namespace std;
+
+//change the long long to int if you need to save memory/time really badly
+typedef long long ll;
+
+//Comment this define when working on interactive problems
+#define endl "\n"
+#define sqrt(n) sqrt((long double) n)
+
+const ll MAXN = 5e5 + 5;
+const ll ZER = 0;
+const ll ONE = 1;
+const ll INF = LLONG_MAX;
+const ll MOD = 998244353;
+
+ll min(ll a, ll b) {
+    if (a < b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+ 
+ll max(ll a, ll b) {
+    if (a > b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+
+ll mod(ll num) {
+    return (num >= MOD ? num % MOD : num);
+}
+
+ll __gcd(ll a, ll b) {
+    if (b == 0) {
+        return a;
+    }
+    
+    if (a == 0) {
+        return b;
+    }
+    
+    if (a < b) {
+        swap(a, b);
+    }
+    
+    return __gcd(b, a % b);
+}
+
+ll __lcm(ll a, ll b) {
+    ll prod = a*b;
+    return prod/__gcd(a, b);
+}
+
+ll powmod(ll a, ll b){
+    a %= MOD;
+    if (a == 0) return 0;
+    ll product = 1;
+    while(b > 0){
+        if (b&1){    // you can also use b % 2 == 1
+            product *= a;
+            product %= MOD;
+            --b;
+        }
+        a *= a;
+        a %= MOD;
+        b /= 2;    // you can also use b >> 1
+    }
+    return product;
+}
+
+
+//calculates the inverse of a number mod MOD
+ll inv(ll a) {
+    return powmod(a, MOD - 2);
+}
+
+//Observation: By doing some math, we realize that the optimal length of a business trip can be at most 1000
+void solve(ll ca)
+{
+    //Read in input
+    ll n, m, c;
+    cin >> n >> m >> c;
+    
+    ll mon[n];
+    for (ll i = 0; i < n; i++) {
+        cin >> mon[i];
+    }
+    
+    //adj[i] is a list of all the nodes who can reach node i through an edge. Since the edges provided in the problem are directed edges, adj will essentially store the "reversed" edges
+    vector<ll> adj[n];
+    for (ll i = 0; i < m; i++) {
+        ll a, b;
+        cin >> a >> b;
+        a--; b--;
+        
+        adj[b].push_back(a);
+    }
+    
+    //dp[i][j] is the maximum #of money that Bessie can make ending at node i using j units of time, or -1 if it's impossible
+    ll dp[n][1001];
+    
+    //Initialize everything to impossible
+    for (ll i = 0; i < n; i++) {
+        for (ll j = 0; j < 1001; j++) {
+            dp[i][j] = -1;
+        }
+    }
+    
+    //Base case: Bessie starts at node 0 with 0 money
+    dp[0][0] = 0;
+    
+    //Iterate over the current time
+    for (ll ct = 1; ct <= 1000; ct++) {
+        for (ll cn = 0; cn < n; cn++) {
+            for (auto el: adj[cn]) {
+                //For each node in the current time, iterate over all the nodes who will reach it in one edge. If Bessie could have reached these nodes at current time - 1, then update the amount of money Bessie can make at the current mode in the current time, while taking care to make sure we maximize the amount of money Bessie can make
+                if (dp[el][ct-1] != -1) {
+                    dp[cn][ct] = max(dp[cn][ct], dp[el][ct-1] + mon[cn]);
+                }
+            }
+        }
+    }
+    
+    //Iterate over all times, consider the cost, and use that to get the best answer. Note that the answer can be 0 if Bessie decides to do nothing
+    ll ans = 0;
+    for (ll ct = 0; ct <= 1000; ct++) {
+        ans = max(ans, dp[0][ct] - (c*ct*ct));
+    }
+    
+    cout << ans << endl;
+    
+    return;
+}
+
+int main()
+{
+    //mt19937 rng(0);
+    
+    //Fast IO
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    freopen("time.in", "r", stdin);
+    freopen("time.out", "w", stdout);
+    
+    ll t = 1;
+    //cin >> t;
+
+    ll co = 1;
+    while (t--) {
+        solve(co);
+        ++co;
+    }
+}
+
+//Always write your algorithm down on a piece of paper and question EACH and EVERY step if you aren't able to find an implementation mistake in your code.

@@ -1,0 +1,227 @@
+USACO 2022 January Contest, Gold
+Problem 1. Drought
+
+Code:
+//#include <bits/stdc++.h>
+//#include <ext/pb_ds/assoc_container.hpp>
+//using namespace __gnu_pbds;
+#include <iostream>
+#include <fstream>
+#include <algorithm>
+#include <vector>
+#include <stack>
+#include <queue>
+#include <math.h>
+#include <set>
+#include <map>
+#include <string>
+#include <tuple>
+#include <numeric>
+#include <climits>
+#include <bitset>
+#include <iomanip>
+#include <random>
+#include <ctime>
+
+using namespace std;
+
+//change the long long to int if you need to save memory/time really badly
+typedef long long ll;
+
+//Comment this define when working on interactive problems
+#define endl "\n"
+#define sqrt(n) sqrt((long double) n)
+
+const ll MAXN = 5e5 + 5;
+const ll ZER = 0;
+const ll ONE = 1;
+const ll INF = LLONG_MAX;
+const ll MOD = 1e9 + 7;
+
+ll min(ll a, ll b) {
+    if (a < b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+ 
+ll max(ll a, ll b) {
+    if (a > b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+
+ll mod(ll num) {
+    return (num >= MOD ? num % MOD : num);
+}
+
+ll __gcd(ll a, ll b) {
+    if (b == 0) {
+        return a;
+    }
+    
+    if (a == 0) {
+        return b;
+    }
+    
+    if (a < b) {
+        swap(a, b);
+    }
+    
+    return __gcd(b, a % b);
+}
+
+ll __lcm(ll a, ll b) {
+    ll prod = a*b;
+    return prod/__gcd(a, b);
+}
+
+ll powmod(ll a, ll b){
+    a %= MOD;
+    if (a == 0) return 0;
+    ll product = 1;
+    while(b > 0){
+        if (b&1){    // you can also use b % 2 == 1
+            product *= a;
+            product %= MOD;
+            --b;
+        }
+        a *= a;
+        a %= MOD;
+        b /= 2;    // you can also use b >> 1
+    }
+    return product;
+}
+
+
+//calculates the inverse of a number mod MOD
+ll inv(ll a) {
+    return powmod(a, MOD - 2);
+}
+
+//Algorithm: We can trivially handle the cases where n = 1 and n = 2, so we won't go over that
+//Observation: If n is even, then if we start off with some valid tuple, we can keep performing operations on the tuple in order to transform all the values in the tuple into 0. Let's also introduce a new array of size n-1 called A. A[i] is the #of times we will perform an operation on positions i and i+1 in the valid tuple.
+//Note that A[1] <= H[1], A[1]+A[2] <= H[2], A[2]+A[3] <= H[3], . . ., A[n-2]+A[n-1] <= H[n-1], A[n-1] <= H[n]. The reason why this works is bc each even and valid n-tuple can be defined uniquely by this array A such that all the hunger values are transformed into 0. So in the case where n is even, all arrays A of length n-1 that satisfy these inequalities will provide us valid even length n-tuples. We can count these with a simple dp. This is enough to satisfy the case where n is even.
+//Observation2: If n is odd, then if we start off with some valid tuple, we can keep performing operations on the tuple in order to transform all the values in the tuple into some value U. Note that we can't go further than U, since it'll be impossible to decrease every value by the same time. So bringing back the array A from the previous construction, our inequalities really look like this:
+//A[1]+U <= H[1], A[1]+A[2]+U <= H[2], A[2]+A[3]+U <= H[3], . . ., A[n-2]+A[n-1]+U <= H[n-1], A[n-1]+U <= H[n]. So to solve the odd case, we'll need to first fix the value of U, and then run the dp. For the odd case, we'll need to add up all the dp values we get over all values of U, since each value of U can provide us unique tuples
+
+//Algorithm: The dp we'll run is a simple one. We'll first fix the value of U from 0 . . . minH inclusive. This is b/c U can't be greater than any of the upper bounds provided in the input. Then we'll set dp[i][j] to be the #of tuples of the first i hunger values such that A[i] = j. The transitions and the optimizations required are described in the solve function
+
+//Implementation Note: Although the description of the algorithm is 1-indexed, my code is 0-indexed
+
+void solve(ll ca)
+{
+    //Read the input and find the minimum bound.
+    ll n; cin >> n;
+    ll h[n]; ll mini = INF;
+    for (ll i = 0; i < n; i++) {
+        cin >> h[i];
+        mini = min(mini, h[i]);
+    }
+    
+    //If n is 1, then any value will work that satisfies the bounds
+    if (n == 1) {
+        cout << h[0]+1 << endl;
+        return;
+    }
+    
+    //If n is 2, then any value will work that is less than both the bounds and that both cows can have
+    if (n == 2) {
+        cout << mini+1 << endl;
+        return;
+    }
+    
+    //Total number of tuples that we will return at the end of the program
+    ll ret = 0;
+    
+    //Fix the value of U and run the dp
+    for (ll u = 0; u <= mini; u++) {
+        ll dp[n][1001]; //dp[i][j] is the #of tuples using the first i cows with A[i] = j
+        ll ps[n][1001]; //ps[i][j] is the sum of dp[i][0] + dp[i][1] + . . . + dp[i][j]. We will use this prefix sum array to optimize our dp
+        
+        //Initialize our dp to 0 since we haven't found any tuples yet
+        for (ll i = 0; i < n; i++) {
+            for (ll j = 0; j < 1001; j++) {
+                dp[i][j] = 0;
+                ps[i][j] = 0;
+            }
+        }
+        //For each possible value of A[1] considering U, we need to update the appropriate dp value
+        for (ll i = 0; i <= (h[0]-u); i++) {
+            dp[0][i] = 1;
+        }
+        
+        //Compute the prefix sum value for the dp values using the first cow
+        for (ll i = 0; i < 1001; i++) {
+            if (i == 0) {
+                ps[0][i] = dp[0][i];
+            } else {
+                ps[0][i] = (ps[0][i-1] + dp[0][i])%MOD;
+            }
+        }
+        
+        //Iterate over the dp state
+        for (ll i = 1; i < n-1; i++) {
+            for (ll j = 0; j <= (h[i]-u); j++) { //Iterate over the dp value over all possible values that we can use for A[i+1] (A[i] in the implementation b/c we've 0-indexed it in the code)
+                if (h[i]-u-j >= 0) { //h[i]-u-j is the largest value for A[i] (A[i-1] in the implementation). If this value is < 0, then there's no solution.
+                    //Now we can use the prefix sums to optimize our solution. Instead of summing up dp[i-1][0] + dp[i-1][1] + . . . + dp[i-1][h[i]-u-j] since all of these could be possible values for the previous value of A, we'll instead use our prefix sums to compute this quantity in O(1) time
+                    dp[i][j] = ps[i-1][h[i]-u-j];
+                }
+            }
+            
+            //Update prefix sums for the tuples involving exactly the first i cows
+            for (ll j = 0; j < 1001; j++) {
+                if (j == 0) {
+                    ps[i][j] = dp[i][j];
+                } else {
+                    ps[i][j] = (ps[i][j-1] + dp[i][j])%MOD;
+                }
+            }
+        }
+        
+        //Now we've handled the first n-1 cows. Now we'll handle the final cow. Since it only needs the last value of A, we'll iterate over all possible values of the penultimate value of A. If any of those values can be used without violating the inequality, we'll increase our answer by the appropriate dp state
+        ll ans = 0;
+        for (ll j = 0; j < 1001; j++) {
+            if (h[n-1]-u-j >= 0) {
+                ans = (ans + dp[n-2][j])%MOD;
+            }
+        }
+        
+        //If we're in the even case, we only need to consider U = 0, so just print the answer we have
+        if (n%2 == 0) {
+            cout << ans << endl;
+            return;
+        } else { //Since we're in the odd case, we need to consider all U values, so add it to our final result
+            ret = (ret + ans)%MOD;
+        }
+    }
+    //Print the number of valid n-tuples
+    cout << ret << endl;
+    return;
+}
+
+int main()
+{
+    //mt19937 rng(0);
+    
+    //Fast IO
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    /*
+    freopen("taming.in", "r", stdin);
+    freopen("taming.out", "w", stdout);
+    */
+    ll t = 1;
+    //cin >> t;
+
+    ll co = 1;
+    while (t--) {
+        solve(co);
+        ++co;
+    }
+}
+
+//Always write your algorithm down on a piece of paper and question EACH and EVERY step if you aren't able to find an implementation mistake in your code.

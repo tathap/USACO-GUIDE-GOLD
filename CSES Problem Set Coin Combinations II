@@ -1,0 +1,159 @@
+CSES Problem Set
+Coin Combinations II
+
+Code:
+//#include <bits/stdc++.h>
+//#include <ext/pb_ds/assoc_container.hpp>
+//using namespace __gnu_pbds;
+#include <iostream>
+#include <fstream>
+#include <algorithm>
+#include <vector>
+#include <stack>
+#include <queue>
+#include <math.h>
+#include <set>
+#include <map>
+#include <string>
+#include <tuple>
+#include <numeric>
+#include <climits>
+#include <bitset>
+#include <iomanip>
+#include <random>
+#include <ctime>
+
+using namespace std;
+
+//change the long long to int if you need to save memory/time really badly
+typedef long long ll;
+
+//Comment this define when working on interactive problems
+#define endl "\n"
+#define sqrt(n) sqrt((long double) n)
+
+const ll MAXN = 5e5 + 5;
+const ll ZER = 0;
+const ll ONE = 1;
+const ll INF = LLONG_MAX;
+const ll MOD = 1e9 + 7;
+
+ll min(ll a, ll b) {
+    if (a < b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+ 
+ll max(ll a, ll b) {
+    if (a > b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+
+ll mod(ll num) {
+    return (num >= MOD ? num % MOD : num);
+}
+
+ll __gcd(ll a, ll b) {
+    if (b == 0) {
+        return a;
+    }
+    
+    if (a == 0) {
+        return b;
+    }
+    
+    if (a < b) {
+        swap(a, b);
+    }
+    
+    return __gcd(b, a % b);
+}
+
+ll __lcm(ll a, ll b) {
+    ll prod = a*b;
+    return prod/__gcd(a, b);
+}
+
+ll powmod(ll a, ll b){
+    a %= MOD;
+    if (a == 0) return 0;
+    ll product = 1;
+    while(b > 0){
+        if (b&1){    // you can also use b % 2 == 1
+            product *= a;
+            product %= MOD;
+            --b;
+        }
+        a *= a;
+        a %= MOD;
+        b /= 2;    // you can also use b >> 1
+    }
+    return product;
+}
+
+
+//calculates the inverse of a number mod MOD
+ll inv(ll a) {
+    return powmod(a, MOD - 2);
+}
+
+void solve(ll ca)
+{
+    ll n, x;
+    cin >> n >> x;
+    
+    ll coins[n];
+    for (ll i = 0; i < n; i++) {
+        cin >> coins[i];
+    }
+    
+    //Sort the coins
+    sort(coins, coins+n);
+    
+    //Let dp[i] be the #of ways to make the sum i where order doesn't matter (i.e 1, 2 is the same as 2, 1).
+    vector<ll> dp(x+1, 0);
+    dp[0] = 1; //only 1 way to make a sum of 0, do nothing
+    
+    //We will only count all orderings that are sorted in the coins they use. For example 1, 2, 1 is the same as 2, 1, 1 and we will only count 1, 1, 2 (the sorted order).
+    //We can do this by iterating over the coins first to make sure the coins are being put in lexographically increasing order, thus only counting sorted orders.
+    for (ll i = 0; i < n; i++) {
+        for (ll j = 0; j <= x; j++) {
+            if (j-coins[i] >= 0) {
+                dp[j] = (dp[j]%MOD + dp[j-coins[i]]%MOD)%MOD; //By counting dp values on the left, we also consider cases where we already had the current coin and are adding another copy of it in addition to cases where the current coin hasn't been used
+            }
+        }
+    }
+    
+    //Print the number of sorted ways to make a sum of x
+    cout << dp[x] << endl;
+    
+    return;
+}
+
+int main()
+{
+    //mt19937 rng(0);
+    
+    //Fast IO
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    /*
+    freopen("team.in", "r", stdin);
+    freopen("team.out", "w", stdout);
+    */
+    ll t = 1;
+    //cin >> t;
+
+    ll co = 1;
+    while (t--) {
+        solve(co);
+        ++co;
+    }
+}
+
+//Always write your algorithm down on a piece of paper and question EACH and EVERY step if you aren't able to find an implementation mistake in your code.

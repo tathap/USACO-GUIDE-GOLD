@@ -1,0 +1,214 @@
+USACO 2019 December Contest, Gold
+Problem 3. Moortal Cowmbat
+
+Code:
+//#include <bits/stdc++.h>
+//#include <ext/pb_ds/assoc_container.hpp>
+//using namespace __gnu_pbds;
+#include <iostream>
+#include <fstream>
+#include <algorithm>
+#include <vector>
+#include <stack>
+#include <queue>
+#include <math.h>
+#include <set>
+#include <map>
+#include <string>
+#include <tuple>
+#include <numeric>
+#include <climits>
+#include <bitset>
+#include <iomanip>
+#include <random>
+#include <ctime>
+
+using namespace std;
+
+//change the long long to int if you need to save memory/time really badly
+typedef long long ll;
+
+//Comment this define when working on interactive problems
+#define endl "\n"
+#define sqrt(n) sqrt((long double) n)
+
+const ll MAXN = 5e5 + 5;
+const ll ZER = 0;
+const ll ONE = 1;
+const ll INF = LLONG_MAX;
+const ll MOD = 1e9 + 7;
+
+ll min(ll a, ll b) {
+    if (a < b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+ 
+ll max(ll a, ll b) {
+    if (a > b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+
+ll mod(ll num) {
+    return (num >= MOD ? num % MOD : num);
+}
+
+ll __gcd(ll a, ll b) {
+    if (b == 0) {
+        return a;
+    }
+    
+    if (a == 0) {
+        return b;
+    }
+    
+    if (a < b) {
+        swap(a, b);
+    }
+    
+    return __gcd(b, a % b);
+}
+
+ll __lcm(ll a, ll b) {
+    ll prod = a*b;
+    return prod/__gcd(a, b);
+}
+
+ll powmod(ll a, ll b){
+    a %= MOD;
+    if (a == 0) return 0;
+    ll product = 1;
+    while(b > 0){
+        if (b&1){    // you can also use b % 2 == 1
+            product *= a;
+            product %= MOD;
+            --b;
+        }
+        a *= a;
+        a %= MOD;
+        b /= 2;    // you can also use b >> 1
+    }
+    return product;
+}
+
+
+//calculates the inverse of a number mod MOD
+ll inv(ll a) {
+    return powmod(a, MOD - 2);
+}
+
+void solve(ll ca)
+{
+    ll n, m, k;
+    cin >> n >> m >> k;
+    
+    string s; cin >> s;
+    
+    ll cost[m][m]; //cost[i][j] is the cost to switch from button i to button j
+    for (ll i = 0; i < m; i++) {
+        for (ll j = 0; j < m; j++) {
+            cin >> cost[i][j];
+        }
+    }
+    
+    //Use Floyd-Warshall to compress the costs so that cost[i][j] will store the cheapest cost to go from button i to j after making a series of switches
+    for (ll k = 0; k < m; k++) {
+        for (ll i = 0; i < m; i++) {
+            for (ll j = 0; j < m; j++) {
+                if (cost[i][k] + cost[k][j] < cost[i][j]) {
+                    cost[i][j] = cost[i][k] + cost[k][j];
+                }
+            }
+        }
+    }
+
+    //ps[i][j] will store the #of instances of character j in the first i characters of the string
+    ll ps[n+1][m];
+    for (ll i = 0; i <= n; i++) {
+        for (ll j = 0; j < m; j++) {
+            ps[i][j] = 0;
+        }
+    }
+    
+    //Compute ps
+    for (ll i = 1; i <= n; i++) {
+        ll ind = s[i-1] - 'a';
+        for (ll j = 0; j < m; j++) {
+            ps[i][j] = ps[i-1][j];
+        }
+        ps[i][ind]++;
+    }
+    
+    ll dp[n+1][m+1]; //dp[i][j] = the minimum cost to transform the first i characters such that the last character is a j (j < m) and there are >= k instances of that last character j in the suffix.  In addition, dp[i][m] is specially defined to be equal to min(dp[i][0], dp[i][1], . . . dp[i][m-1]).
+    ll dp2[n+1][m+1]; //dp2[i][j] = the minimum cost to transform the first i characters such that it consists of a series of substrings that all have length >= k followed by some nonzero instances of character j. Note that the #of instances of character j in the suffix doesn't have to be greater than or equal to k
+    
+    //Intialize dp and dp2 to make our implementation nicer
+    for (ll i = 0; i <= n; i++) {
+        for (ll j = 0; j <= m; j++) {
+            dp[i][j] = INF; //Set to infinity since we don't know if it's achievable
+            dp2[i][j] = 0; //Set to 0 since we can use it to compute the dp2 values.
+        }
+    }
+    
+    //Iterate over the current character in the string
+    for (ll i = 1; i <= n; i++) {
+        //Compute the value corresponding to the current character
+        ll ind = s[i-1] - 'a';
+        for (ll j = 0; j < m; j++) {
+            if (i < k) { //We can only update dp2 by concatenating an instance of character j from the previous value of dp2
+                dp2[i][j] = dp2[i-1][j] + cost[ind][j];
+            } else {
+                //We can use either dp[i-k][m] (the minimum cost over all ending characters of the first i-k characters assuming that the first i-k characters satisfy all constraints) or dp2[i-k][j] (the minimum cost of all valid prefixes of characters followed by some extra instances of character j)
+                dp[i][j] = min(dp[i-k][m], dp2[i-k][j]);
+                //Then use prefix sums to compute the cost of transforming all the characters in (i-k, i] to character j
+                for (ll l = 0; l < m; l++) {
+                    ll amt = ps[i][l] - ps[i-k][l];
+                    dp[i][j] += (amt * cost[l][j]);
+                }
+                
+                //dp2[i][j] can be dp[i][j] since it also ends in an instance of j.
+                //In addition, dp2[i][j] can also be dp2[i-1][j] (the minimum cost of getting a valid prefix plus some extra instances of character j in the first i-1 characters) and then concatenating an extra character of j at the cost of cost[ind][j] (by replacing our current character with character j)
+                //Finally, dp2[i][j] can also be dp[i-1][m] (the minimum cost over all ending characters of the first i-1 characters assuming that the first i-1 characters satisfy all constraints) plus concatenating an extra character of j at the cost[ind][j] (by replacing our current character with character j)
+                dp2[i][j] = min(dp[i][j], min(dp2[i-1][j], dp[i-1][m]) + cost[ind][j]);
+            }
+        }
+        
+        //Set dp[i][m] = min(dp[i][0], dp[i][1], . . ., dp[i][m-1])
+        for (ll j = 0; j < m; j++) {
+            dp[i][m] = min(dp[i][m], dp[i][j]);
+        }
+    }
+    
+    //Print the minimum cost to make the whole string valid over all possible ending characters
+    cout << dp[n][m] << endl;
+    
+    return;
+}
+
+int main()
+{
+    //mt19937 rng(0);
+    
+    //Fast IO
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    freopen("cowmbat.in", "r", stdin);
+    freopen("cowmbat.out", "w", stdout);
+    
+    ll t = 1;
+    //cin >> t;
+
+    ll co = 1;
+    while (t--) {
+        solve(co);
+        ++co;
+    }
+}
+
+//Always write your algorithm down on a piece of paper and question EACH and EVERY step if you aren't able to find an implementation mistake in your code.

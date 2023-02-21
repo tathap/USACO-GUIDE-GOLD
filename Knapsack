@@ -1,0 +1,213 @@
+Knapsack
+Singapore National Olympiad in Informatics 2018 Preliminary Problem 2
+oj.uz
+
+Code:
+//#include <bits/stdc++.h>
+//#include <ext/pb_ds/assoc_container.hpp>
+//using namespace __gnu_pbds;
+#include <iostream>
+#include <fstream>
+#include <algorithm>
+#include <vector>
+#include <stack>
+#include <queue>
+#include <math.h>
+#include <set>
+#include <map>
+#include <string>
+#include <tuple>
+#include <numeric>
+#include <climits>
+#include <bitset>
+#include <iomanip>
+#include <random>
+#include <ctime>
+
+using namespace std;
+
+//change the long long to int if you need to save memory/time really badly
+typedef long long ll;
+
+//Comment this define when working on interactive problems
+#define endl "\n"
+#define sqrt(n) sqrt((long double) n)
+
+const ll MAXN = 2e5 + 5;
+const ll ZER = 0;
+const ll ONE = 1;
+const ll INF = LLONG_MAX;
+const ll MOD = 1e9 + 7;
+
+ll min(ll a, ll b) {
+    if (a < b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+ 
+ll max(ll a, ll b) {
+    if (a > b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+
+ll mod(ll num) {
+    return (num >= MOD ? num % MOD : num);
+}
+
+ll __gcd(ll a, ll b) {
+    if (b == 0) {
+        return a;
+    }
+    
+    if (a == 0) {
+        return b;
+    }
+    
+    if (a < b) {
+        swap(a, b);
+    }
+    
+    return __gcd(b, a % b);
+}
+
+ll __lcm(ll a, ll b) {
+    ll prod = a*b;
+    return prod/__gcd(a, b);
+}
+
+ll powmod(ll a, ll b){
+    a %= MOD;
+    if (a == 0) return 0;
+    ll product = 1;
+    while(b > 0){
+        if (b&1){    // you can also use b % 2 == 1
+            product *= a;
+            product %= MOD;
+            --b;
+        }
+        a *= a;
+        a %= MOD;
+        b /= 2;    // you can also use b >> 1
+    }
+    return product;
+}
+
+
+//calculates the inverse of a number mod MOD
+ll inv(ll a) {
+    return powmod(a, MOD - 2);
+}
+
+//Observation 1: We can merge all the items with the same weights together, sort them by their value from the largest to the smallest, and remove all the extra items that would have a total sum > s. This reduces the number of items and frequencies we have to check from 10^5 and 10^9 respectively to 2000 items and at most 2000 frequencies. In general for a weight of i, we will have at most s/i items of that weight, since we can't use any more.
+//Algorithm: Once we've utilized the above observation, we can run a standard knapsack dp. First iterate over the current weight that we are going to choose items for. Note that this weight is bounded by s (<=2000). Then going from right to left, at the current dp[i] state, we'll use the first item of the current weight, the first 2 items of the current weight, and so on while it's possible.
+//Complexity: The time needed is O(2000*2000log2000) which will pass. The reason why this is is b/c after iterating over current dp state, the total #of operations over all weights will be 2000log2000. This is b/c in the worst case, one weight will have a weight of 1 and thus in the worst case cost 2000 operations after considering the current position. Another weight could have a weight of 2 and thus in the worst case cost 2000/2 operations. We see that once considering the cost to iterate over the position, we'll need 2000 + 2000/2 + 2000/3 + 2000/4 + . . . operations. This sum is 2000log2000 which finishes the explanation of the time complexity
+
+void solve(ll ca)
+{
+    ll s, n;
+    cin >> s >> n;
+    
+    vector<pair<ll, ll>> items[s+1]; //list of items with the same weight. In particular, each pair will consist of the value of some item with weight i and the frequency of that same item
+    
+    for (ll i = 0; i < n; i++) {
+        ll v, w, k;
+        cin >> v >> w >> k;
+        
+        items[w].push_back({v, k});
+    }
+    
+    vector<ll> weights[s+1]; //Given a weight, will store a list of the highest values of that weight to pick. In particular, it will consist of a list of the largest values of all items with weight i. Note that an item with a frequency > 1 will be considered as multiple items and each copy could be used for the best value. This will only contain at most s values, since we won't add any more values to the list if the total weight becomes greater than s
+    
+    for (ll i = 0; i <= s; i++) {
+        //If the current weight has no items of that weight, skip it
+        if (items[i].size() == 0) {
+            continue;
+        }
+        
+        //Sort the items by increasing value to descending value since we want to prioritize higher value items first
+        sort(items[i].begin(), items[i].end(), greater<>());
+        ll cur = 0; //current sum of the weights
+        for (ll j = 0; j < items[i].size(); j++) {
+            ll k = 0;
+            while (cur+i <= s && k < items[i][j].second) { //while we can add a weight to our list, add the highest valued one so far. Make sure we don't go over the frequency or that the total sum doesn't become greater than s
+                weights[i].push_back(items[i][j].first);
+                k++;
+                cur += i;
+            }
+            
+            if (cur+i > s) {
+                break;
+            }
+        }
+    }
+
+    ll dp[s+1]; //dp[i] is the maximum value you can get with a weight of i
+    for (ll i = 0; i <= s; i++) {
+        dp[i] = -1;
+    }
+    dp[0] = 0; //With a weight of 0, you can only get a value of 0
+    
+    //Iterate over all the possible weights
+    for (ll we = 0; we <= s; we++) {
+        //If no items of the current weight exist, then remove it
+        if (weights[we].size() == 0) {
+            continue;
+        }
+        for (ll i = s; i >= 0; i--) { //Current sum
+            if (dp[i] != -1) { //If the current dp value is achievable, then we'll try to use as many of the items of the current weight as possible. We can go from left to right in the array weights[we] since they've been sorted so that the higher valued items of the current weight are prioritized.
+                //Once again make sure you don't use more items than you have or that the total sum becomes greater than s
+
+                //cur stores the current dp sum we are checking.
+                //pref stores the sum of all the values so far
+                //ind stores the item of the current weight that we are checking
+                ll cur = i; ll pref = 0; ll ind = 0;
+                while (cur+we <= s && ind < weights[we].size()) {
+                    dp[cur+we] = max(dp[cur+we], dp[i]+pref+weights[we][ind]);
+                    pref += weights[we][ind];
+                    cur += we;
+                    ind++;
+                }
+            }
+        }
+    }
+    
+    //Print the best answer
+    ll ans = 0;
+    for (ll i = 0; i <= s; i++) {
+        ans = max(ans, dp[i]);
+    }
+    
+    cout << ans << endl;
+    
+    return;
+}
+
+int main()
+{
+    //mt19937 rng(0);
+    
+    //Fast IO
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    /*
+    freopen("feast.in", "r", stdin);
+    freopen("feast.out", "w", stdout);
+    */
+    
+    ll t = 1;
+    //cin >> t;
+
+    ll co = 1;
+    while (t--) {
+        solve(co);
+        ++co;
+    }
+}
+
+//Always write your algorithm down on a piece of paper and question EACH and EVERY step if you aren't able to find an implementation mistake in your code.

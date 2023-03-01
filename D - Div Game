@@ -1,0 +1,84 @@
+D - Div Game 
+AtCoder Beginner Contest 169
+
+Code:
+#include <iostream>
+#include <stack>
+#include <queue>
+#include <algorithm>
+#include <set>
+#include <string>
+#include <map>
+#include <math.h>
+#include <vector>
+#include <climits>
+using namespace std;
+
+typedef long long ll;
+
+const ll MAXN = 1e6 + 1;
+const ll INF = LLONG_MAX;
+
+//Algorithm: We'll first compute the prime factorization of n. To do so, we'll compute all the primes in the range [2, sqrt(n)] using the Sieve of Eratosthenes
+//Then we'll use each prime <= sqrt(n) and try to divide n by it if possible and update the prime factorization. If n is > 1 at the end, that means n is the last prime factor
+//Once we have the prime factorization, use the following algorithm: Solve for each prime factor seperately. Let's say we're looking at 5^7. To maximize the number of moves, divide by 5^1, divide by 5^2, and then divide by 5^3. So for each prime that makes up n, find the largest c such that there are at least c*(c+1)/2 instances of that prime in n.
+void solve() {
+    ll n;
+    cin >> n;
+    
+    ll sr = sqrt(n);
+    
+    vector<bool> isPrime(sr+1, true);
+    for (ll i = 2; i <= sr; i++) {
+        if (isPrime[i]) {
+            for (ll j = 2*i; j <= sr; j+=i) {
+                isPrime[j] = false;
+            }
+        }
+    }
+    
+    map<ll, ll> freq;
+    for (ll i = 2; i <= sr; i++) {
+        if (!isPrime[i]) {
+            continue;
+        }
+        while (n % i == 0) {
+            n/=i;
+            freq[i]++;
+        }
+    }
+    
+    if (n > 1) {
+        freq[n]++;
+    }
+    
+    //Compute the answer using the greedy idea mentioned
+    ll ans = 0;
+    for (auto el: freq) {
+        ll sum = 0; ll cnt = 0;
+        for (ll c = 1; ;c++) {
+            sum += c; cnt++;
+            if (sum > el.second) {
+                sum -= c;
+                cnt--;
+                break;
+            }
+        }
+        
+        ans += cnt;
+    }
+    
+    cout << ans << endl;
+}
+
+int main()
+{
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    ll t = 1;
+
+    while (t--) {
+        solve();
+    }
+}

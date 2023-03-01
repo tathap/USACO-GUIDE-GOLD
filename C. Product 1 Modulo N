@@ -1,0 +1,81 @@
+C. Product 1 Modulo N
+Codeforces Round #716 (Div. 2)
+
+Code:
+#include <iostream>
+#include <stack>
+#include <queue>
+#include <algorithm>
+#include <set>
+#include <string>
+#include <map>
+#include <math.h>
+#include <vector>
+#include <climits>
+using namespace std;
+
+typedef long long ll;
+
+const ll MAXN = 1e6 + 1;
+const ll INF = LLONG_MAX;
+
+ll __gcd(ll a, ll b) {
+    if (b == 0) {
+        return a;
+    }
+    
+    if (a == 0) {
+        return b;
+    }
+    
+    if (a < b) {
+        swap(a, b);
+    }
+    
+    return __gcd(b, a % b);
+}
+
+//Observation: Let's take all the numbers k such that gcd(k, n) = 1. If this isn't true, then it's impossible to include k in the subsequence and have their product be congruent to 1 modulo n. Think about this.
+//Let's say we've picked all such numbers such that they are coprime to n. If their product is already congruent to 1 modulo n, then print them. Otherwise if their product is k, then we'll need to remove k from our subsequence. k is guaranteed to be in our subsequence b/c k is coprime to n since our product is composed of other numbers coprime to n. And since k is therefore coprime to n, it must have been chosen in our list
+
+void solve() {
+    ll n;
+    cin >> n;
+
+    ll prod = 1;
+    vector<ll> ans;
+    for (ll i = 1; i < n; i++) {
+        if (__gcd(i, n) == 1) {
+            prod = (prod%n * i%n)%n;
+            ans.push_back(i);
+        }
+    }
+    
+    if (prod == 1) {
+        cout << ans.size() << endl;
+        for (auto el: ans) {
+            cout << el << " ";
+        }
+        cout << endl;
+    } else {
+        cout << ans.size() - 1 << endl;
+        for (auto el: ans) {
+            if (el != prod) {
+                cout << el << " ";
+            }
+        }
+        cout << endl;
+    }
+}
+
+int main()
+{
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    ll t = 1;
+
+    while (t--) {
+        solve();
+    }
+}

@@ -1,0 +1,149 @@
+D. Power Products
+Technocup 2020 - Elimination Round 2
+
+Code:
+#include <iostream>
+#include <stack>
+#include <queue>
+#include <algorithm>
+#include <set>
+#include <string>
+#include <map>
+#include <math.h>
+#include <vector>
+#include <climits>
+using namespace std;
+
+typedef long long ll;
+
+const ll MAXN = 1e5 + 1;
+const ll INF = LLONG_MAX;
+
+ll __gcd(ll a, ll b) {
+    if (b == 0) {
+        return a;
+    }
+    
+    if (a == 0) {
+        return b;
+    }
+    
+    if (a < b) {
+        swap(a, b);
+    }
+    
+    return __gcd(b, a % b);
+}
+
+//Algorithm: Note that since a_i <= 10^5 for all i, we can solve this problem by considering the numbers 1, 2, 3, . . . 10^5 and counting pairs that work here.
+//Compute the frequency of each number in a
+void solve() {
+    ll n, k;
+    cin >> n >> k;
+    
+    ll cnt[MAXN]; //Stores the frequency of number i in the input array
+    for (ll i = 0; i < MAXN; i++) {
+        cnt[i] = 0;
+    }
+    for (ll i = 0; i < n; i++) {
+        ll a; cin >> a;
+        cnt[a]++;
+    }
+    
+    //Run Sieve to find the smallest prime a number is divided by. This will help us efficiently get the prime factorization of a number
+    ll smallest[MAXN];
+    for (ll i = 1; i < MAXN; i++) {
+        smallest[i] = INF;
+    }
+    for (ll i = 2; i < MAXN; i++) {
+        if (smallest[i] == INF) {
+            for (ll j = i; j < MAXN; j+=i) {
+                smallest[j] = min(smallest[j], i);
+            }
+        }
+    }
+    
+    //Number of pairs
+    ll ans = 0;
+    for (ll i = 1; i < MAXN; i++) {
+        //If no instances of the current number exist in the input array, it's not worth processing
+        if (cnt[i] == 0) {
+            continue;
+        }
+        
+        //Get the prime factorization using the information we computed
+        map<ll, ll> pf;
+        ll num = i;
+        while (smallest[num] != INF) {
+            pf[smallest[num]]++;
+            num /= smallest[num];
+        }
+        
+        //Once we have the prime factorization, we need to find all other numbers that could pair with it. In particular, these numbers will be of the form m * a^k. The m can be calculated as the minimum amount needed to multiply by i make it a perfect power of k. Then we can iterate over the a to get all possible numbers.
+        
+        //Compute m. Here it will be stored in the variable prod
+        ll prod = 1; bool works = true;
+        
+        //Iterate over each prime factor
+        for (auto el: pf) {
+            //If the number of instances of the current prime factor is divisible by k, we don't need to worry about it
+            if (el.second%k == 0) {
+                continue;
+            }
+            //Otherwise, we need to keep multiplying until the number of occurences of the prime factor is divisible by k. Note that if at any point m becomes greater than 1e5, then there's no solution since no number we have will be big enough to pair up with i.
+            for (ll j = (el.second%k); j < k; j++) {
+                prod *= el.first;
+                if (prod > 1e5) {
+                    works = false;
+                    break;
+                }
+            }
+            
+            if (!works) {
+                break;
+            }
+        }
+        
+        if (!works) {
+            continue;
+        }
+        
+        //Now iterate over a
+        for (ll a = 1; ;a++) {
+            ll prod2 = 1; //Compute a^k while making sure that the combined number is less than 1e5
+            for (ll j = 0; j < k; j++) {
+                prod2 *= a;
+                if (prod*prod2 > 1e5) {
+                    works = false;
+                    break;
+                }
+            }
+            
+            if (!works) {
+                break;
+            }
+            
+            //If i can be paired with itself, then we need to add (cnt[i])_C_2 to the answer.
+            if (i == prod*prod2) {
+                ans += (cnt[i] * (cnt[i] - 1)/2);
+            } else if (i < prod*prod2) { //Otherwise in order to prevent double counting, we'll only count pairs where i < the paired number and add these to the answer
+                ans += (cnt[i] * cnt[prod*prod2]);
+            }
+        }
+    }
+    
+    //Print the answer
+    cout << ans << endl;
+}
+
+int main()
+{
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    ll t = 1;
+
+    while (t--) {
+        solve();
+    }
+}

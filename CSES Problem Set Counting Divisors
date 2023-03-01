@@ -1,0 +1,71 @@
+CSES Problem Set
+Counting Divisors
+
+Code:
+#include <iostream>
+#include <stack>
+#include <queue>
+#include <algorithm>
+#include <set>
+#include <string>
+#include <map>
+#include <math.h>
+#include <vector>
+#include <climits>
+using namespace std;
+
+typedef long long ll;
+
+const ll MAXN = 1e6 + 1;
+const ll INF = LLONG_MAX;
+
+void solve() {
+    ll n;
+    cin >> n;
+    
+    //Precompute the smallest prime that divides each number
+    ll smallest[MAXN];
+    for (ll i = 0; i < MAXN; i++) {
+        smallest[i] = INF;
+    }
+    
+    for (ll i = 2; i < MAXN; i++) {
+        if (smallest[i] != INF) {
+            continue;
+        }
+        
+        for (ll j = i; j < MAXN; j+=i) {
+            smallest[j] = min(smallest[j], i);
+        }
+    }
+    
+    //For each query, get its prime factorization and compute the answer in efficient time
+    while (n--) {
+        ll x; cin >> x;
+        
+        map<ll, ll> freq;
+        while (smallest[x] != INF) {
+            freq[smallest[x]]++;
+            x /= smallest[x];
+        }
+        
+        ll ans = 1;
+        for (auto el: freq) {
+            ans *= (el.second+1);
+        }
+        
+        cout << ans << endl;
+    }
+}
+
+int main()
+{
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    ll t = 1;
+
+    while (t--) {
+        solve();
+    }
+}

@@ -1,0 +1,141 @@
+D. The Number of Pairs
+Educational Codeforces Round 106 (Rated for Div. 2)
+
+Code:
+//#include <bits/stdc++.h>
+//#include <ext/pb_ds/assoc_container.hpp>
+//using namespace __gnu_pbds;
+#include <iostream>
+#include <fstream>
+#include <algorithm>
+#include <vector>
+#include <stack>
+#include <queue>
+#include <math.h>
+#include <set>
+#include <map>
+#include <string>
+#include <tuple>
+#include <numeric>
+#include <climits>
+#include <bitset>
+#include <iomanip>
+#include <random>
+#include <ctime>
+
+using namespace std;
+
+const int INF = 1e9;
+const int MAXN = 2e7 + 3;
+
+//stores the smallest prime that divides i
+int smallest[MAXN];
+
+//stores the prime factorization
+vector<pair<int, int>> build;
+vector<int> divisors; //stores the divisors
+
+//recursively generate divisors
+void generate(int ind, int cur) {
+    if (ind == build.size()) {
+        divisors.push_back(cur);
+        return;
+    }
+    
+    int ncur = cur;
+    for (int k = 0; k <= build[ind].second; k++) {
+        generate(ind+1, ncur);
+        ncur *= build[ind].first;
+    }
+}
+
+//Observation: The lcm(a, b) = gcd(a, b) * rem where rem is some nonzero leftover amount. If we plug this into our equation, we get c * rem * gcd(a, b) - d * gcd(a, b) = x. This gives gcd(a, b) * [c*rem - d] = x.
+//Simplifying that equation gives us gcd(a, b) = x/(c*rem - d). So we can iterate over all divisors of x. Then for each divisor, we set it equal to c*rem - d to find the corresponding remainder amount (if it exists). Now how many solutions does that add assuming we know gcd(a, b) and rem?
+//Observation: If we know gcd(a, b) and rem, let's think about the structure of a and b in order to make lcm(a, b) = gcd(a, b) * rem. We know that a and b are each equal to gcd(a, b) times something. What happens if both of the extra amounts share a prime factor? Then our original gcd isn't correct since they share another factor, causing a contradiction. Thus if we prime factorize rem into the form p_1^a_1 * p_2^a_2 * . . ., we need to make the chose for each prime in the factorization whether to put all of its instances in a or all of its instances in b. Thus the #of pairs we get is 2^cnt where cnt is the #of distinct primes in the prime factorization of rem.
+
+//Note that our algo barely passes the time limit. It can be optimized by precomputing for each number i the #of distinct prime factors it has. Let val[i] be the #of distinct prime factors of i. val[i] = val[i/smallest[i]]. In addition, we need to add 1 if smallest[i] != smallest[i/smallest[i]]. Do some examples of computing val[i] and smallest[i] for the first i numbers to understand this
+void solve(int ca)
+{
+    //Read in the input
+    int c, d, x;
+    cin >> c >> d >> x;
+    
+    //Generate all divisors of x
+    build.clear(); divisors.clear();
+    while (smallest[x] != INF) {
+        int cur = smallest[x];
+        int amt = 0;
+        while (smallest[x] == cur) {
+            amt++;
+            x /= smallest[x];
+        }
+        build.push_back({cur, amt});
+    }
+    generate(0, 1);
+    
+    //Number of valid pairs
+    int ans = 0;
+    
+    //Iterate over the divisors
+    for (auto el: divisors) {
+        //If we set the divisor el equal to c*rem - d, we get rem = (el + d)/c. Thus a valid rem only exists if (el + d) is divisble by c
+        int rem = el+d;
+        if (rem%c == 0) {
+            rem/=c; //Get your valid rem
+            
+            //Compute the #of distinct primes in the prime factorization of rem
+            int cnt = 0;
+            while (smallest[rem] != INF) {
+                int cur = smallest[rem];
+                cnt++;
+                while (smallest[rem] == cur) {
+                    rem /= smallest[rem];
+                }
+            }
+            
+            //Increase the answer by 2^cnt
+            ans += (1 << cnt);
+        }
+    }
+    
+    //Print the answer
+    cout << ans << endl;
+    
+    return;
+}
+
+int main()
+{
+    //mt19937 rng(0);
+    
+    //Fast IO
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    /*
+    freopen("sabotage.in", "r", stdin);
+    freopen("sabotage.out", "w", stdout);
+    */
+    
+    //Precompute the smallest prime that divides each number
+    for (int i = 0; i < MAXN; i++) {
+        smallest[i] = INF;
+    }
+    
+    for (int i = 2; i < MAXN; i++) {
+        if (smallest[i] == INF) {
+            for (int j = i; j < MAXN; j+=i) {
+                smallest[j] = min(smallest[j], i);
+            }
+        }
+    }
+    
+    int t = 1;
+    cin >> t;
+
+    int co = 1;
+    while (t--) {
+        solve(co);
+        ++co;
+    }
+}

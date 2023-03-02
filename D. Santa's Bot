@@ -1,0 +1,122 @@
+D. Santa's Bot
+Educational Codeforces Round 79 (Rated for Div. 2)
+
+Code:
+//#include <bits/stdc++.h>
+//#include <ext/pb_ds/assoc_container.hpp>
+//using namespace __gnu_pbds;
+#include <iostream>
+#include <fstream>
+#include <algorithm>
+#include <vector>
+#include <stack>
+#include <queue>
+#include <math.h>
+#include <set>
+#include <map>
+#include <string>
+#include <tuple>
+#include <numeric>
+#include <climits>
+#include <bitset>
+#include <iomanip>
+#include <random>
+#include <ctime>
+
+using namespace std;
+
+typedef long long ll;
+
+const ll MOD = 998244353;
+const ll MAXN = 1e6 + 1;
+
+ll powmod(ll a, ll b) {
+    a %= MOD;
+    if (a == 0 && b == 0) {
+        return 1;
+    }
+    if (a == 0) {
+        return 0;
+    }
+    if (b == 0) {
+        return 1;
+    }
+    
+    ll ret;
+    if (b%2 == 1) {
+        ret = (a%MOD * powmod(a, b-1)%MOD)%MOD;
+    } else {
+        ret = powmod(a, b/2)%MOD;
+        ret = (ret%MOD * ret%MOD)%MOD;
+    }
+
+    return ret;
+}
+
+ll inv(ll num) {
+    return powmod(num, MOD-2);
+}
+
+//Algorithm: We'll iterate over all the first kids and all the items that kid wants while computing the probability
+void solve(ll ca)
+{
+    ll n;
+    cin >> n;
+    
+    ll cnt[MAXN]; //cnt[i] is the #of kids who want present i
+    for (ll i = 0; i < MAXN; i++) {
+        cnt[i] = 0;
+    }
+    
+    //Stores all the input
+    vector<ll> items[n];
+    for (ll i = 0; i < n; i++) {
+        ll k; cin >> k;
+        while (k--) {
+            ll a; cin >> a;
+            items[i].push_back(a);
+            cnt[a]++;
+        }
+    }
+    
+    //Total sum of the probability of a valid decision. Note our copious use of the modulo inverse function to handle divisions
+    ll ans = 0;
+    for (ll i = 0; i < n; i++) {
+        for (auto el: items[i]) {
+            //After iterating over a kid and the item that they want, the probability is (1/n) * (1/k) where k is the number of items the current kid has
+            ll prod = (inv(n)%MOD * inv(items[i].size())%MOD)%MOD;
+            //Now we need to multiply this by the #of kids who want the current item which is (cnt[curitem]/n)
+            prod = (prod%MOD * cnt[el]%MOD * inv(n)%MOD)%MOD;
+            //Add this probability to our answer
+            ans = (ans%MOD + prod%MOD)%MOD;
+        }
+    }
+    
+    //Print the answer
+    cout << ans << endl;
+    
+    return;
+}
+
+int main()
+{
+    //mt19937 rng(0);
+    
+    //Fast IO
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    /*
+    freopen("sabotage.in", "r", stdin);
+    freopen("sabotage.out", "w", stdout);
+    */
+
+    ll t = 1;
+    //cin >> t;
+
+    ll co = 1;
+    while (t--) {
+        solve(co);
+        ++co;
+    }
+}

@@ -1,0 +1,131 @@
+Queue Operate All Composite
+https://judge.yosupo.jp/problem/queue_operate_all_composite
+
+Code:
+//#include <bits/stdc++.h>
+//#include <ext/pb_ds/assoc_container.hpp>
+//using namespace __gnu_pbds;
+#include <iostream>
+#include <fstream>
+#include <algorithm>
+#include <vector>
+#include <stack>
+#include <queue>
+#include <math.h>
+#include <set>
+#include <map>
+#include <string>
+#include <tuple>
+#include <numeric>
+#include <climits>
+#include <bitset>
+#include <iomanip>
+#include <random>
+#include <ctime>
+
+using namespace std;
+
+typedef long long ll;
+
+ll MOD = 998244353;
+const ll MAXN = 1e6 + 1;
+
+ll powmod(ll a, ll b) {
+    a %= MOD;
+    if (a == 0 && b == 0) {
+        return 1;
+    }
+    if (a == 0) {
+        return 0;
+    }
+    if (b == 0) {
+        return 1;
+    }
+    
+    ll ret;
+    if (b%2 == 1) {
+        ret = (a%MOD * powmod(a, b-1)%MOD)%MOD;
+    } else {
+        ret = powmod(a, b/2)%MOD;
+        ret = (ret%MOD * ret%MOD)%MOD;
+    }
+
+    return ret;
+}
+
+ll inv(ll num) {
+    return powmod(num, MOD-2);
+}
+
+//Algorithm: We will store a vectors of all our function and a variable that will point to the current leftmost function. Once we remove a function from the beginning, we can just move the pointer right by 1 unit. In addition, we'll also store the product of all the coefficients of all the currently existing functions. And we will finally maintain 2 variables that will tell us the final coefficient of the x after considering all the functions in order and the final coefficient
+void solve(ll ca)
+{
+    ll n; cin >> n;
+
+    //product of the coefficients of all the currently existing functions
+    ll prod = 1;
+    //list of functions.
+    vector<pair<ll, ll>> functions; ll point = 0; //points to leftmost active function
+    
+    //finalx and finalc are the final coefficient of the x and constant respectively after using all the functions in the following order f_r(f_r-1(...f_l(x)...)) after simplifying this in terms of x
+    ll finalx = 1; ll finalc = 0;
+    while(n--) {
+        ll ind; cin >> ind;
+        
+        //If we add a function, then add it to the list, update finalx and finalc, and update the product
+        if (ind == 0) {
+            ll a, b;
+            cin >> a >> b;
+            functions.push_back({a, b});
+            finalx = (finalx%MOD * a%MOD)%MOD;
+            finalc = (finalc%MOD * a%MOD)%MOD;
+            finalc = (finalc%MOD + b%MOD)%MOD;
+            prod = (prod%MOD * a%MOD)%MOD;
+        } else if (ind == 2) { //We can plug in the value of x using our cumulative/final coefficient and constant
+            ll input; cin >> input;
+            ll ans = (finalx%MOD * input%MOD)%MOD;
+            ans = (ans%MOD + finalc%MOD)%MOD;
+            cout << ans << endl;
+        } else { //Now we need to remove the first function. Note that removing a function is the same as replacing it with y = x
+            //Divide prod by the coefficient of the first function since it's being deleted
+            prod = (prod%MOD * inv(functions[point].first)%MOD)%MOD;
+
+            //Let's say that the first function was ax + b. Then after plugging everything in, the final coefficient and constant would be a*prod*x + prod*b + const where const is some other constant, a and b are the coefficient and constant of the original function, and prod is the product that we are maintaining.
+            //After replacing this function with x (effectively removing it), we can recompute to get prod*x + 0 + const. Note that this means that to update finalx, we need to replace it with prod since prod will be the new coefficient of the x
+            finalx = prod%MOD;
+            
+            //We will also need to subtract prod*b from finalc to update it
+            finalc = ((finalc%MOD) + MOD -((prod%MOD)*(functions[point].second%MOD))%MOD)%MOD;
+
+            //Replace the functions with y = x and move our pointer to the right to the new leftmost function
+            functions[point].first = 1;
+            functions[point].second = 0;
+            point++;
+        }
+    }
+    
+    return;
+}
+
+int main()
+{
+    //mt19937 rng(0);
+    
+    //Fast IO
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    /*
+    freopen("sabotage.in", "r", stdin);
+    freopen("sabotage.out", "w", stdout);
+    */
+
+    ll t = 1;
+    //cin >> t;
+
+    ll co = 1;
+    while (t--) {
+        solve(co);
+        ++co;
+    }
+}

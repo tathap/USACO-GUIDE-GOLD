@@ -1,0 +1,87 @@
+CSES Problem Set
+Sum of Divisors
+
+Code:
+#include <iostream>
+#include <stack>
+#include <queue>
+#include <algorithm>
+#include <set>
+#include <string>
+#include <map>
+#include <math.h>
+#include <vector>
+#include <climits>
+using namespace std;
+
+typedef long long ll;
+
+const ll MOD = 1e9 + 7;
+
+ll powmod(ll a, ll b){
+    a %= MOD;
+    if (a == 0) return 0;
+    ll product = 1;
+    while(b > 0){
+        if (b&1){    // you can also use b % 2 == 1
+            product *= a;
+            product %= MOD;
+            --b;
+        }
+        a *= a;
+        a %= MOD;
+        b /= 2;    // you can also use b >> 1
+    }
+    return product;
+}
+
+//calculates the inverse of a number mod MOD
+ll inv(ll a) {
+    return powmod(a, MOD - 2);
+}
+
+void solve() {
+    //Algorithm: Note that if we count the #of times that each number i in the range [1, n] is a divisor for another number j (possibly equal to i) in this range, then we can add i*j to our total answer.
+    //Observation: The number of times that a number i is the divisor of another number in the range [1, n] is floor(n/i).
+    //Observation2: If we look at the numbers [1, n] in order while also looking at the number of times that each number in [1, n] is counted (using the previous observation), we see that this second array is non-increasing. EX: n = 5. [1, 2, 3, 4, 5], [5, 2, 1, 1, 1] since 1 gets counted 5 times, 2 gets counted twice, and 3, 4, and 5 all get counted only once.
+    //Algorithm: We notice that the number of subarrays where every element inside gets counted the same number of times is very small and possibly logarithmic. So we'll iterate over these subarrays, get the sum of every element in the subarray, multiply that by the number of times each element in the subarray will be counted, and add that to the answer
+    ll n;
+    cin >> n;
+    
+    ll i = 1; //start of current subarray
+    ll ans = 0; //total sum
+    
+    while (i <= n) {
+        ll amt = n/i; //amt is the number of times that an element in the current subarray with the left number being i can be counted
+        ll ul = n/amt; //ul is the rightmost element in the current subarray such that every number in [i, ul] gets counted amt times.
+        //Note that c++ is taking the floor of the divisions. You can play with some examples to see why the math works
+            
+        //Compute the sum in the range [i, ul] using math
+        ll sum = (i%MOD + ul%MOD)%MOD;
+        sum = (sum%MOD * (ul%MOD - i%MOD + 1 + MOD)%MOD);
+        sum = (sum%MOD * inv(2)%MOD)%MOD;
+        
+        //Multiply that sum with the amount of times each element will be used
+        sum = (sum%MOD * amt%MOD)%MOD;
+        //Add our sum to the answer
+        ans = (ans%MOD + sum%MOD)%MOD;
+
+        //Move i to be the start of the next subarray
+        i = ul+1;
+    }
+    
+    //Print the answer
+    cout << ans << endl;
+}
+
+int main()
+{
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    ll t = 1;
+
+    while (t--) {
+        solve();
+    }
+}

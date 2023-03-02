@@ -1,0 +1,153 @@
+CSES Problem Set
+Divisor Analysis
+
+Code:
+//#include <bits/stdc++.h>
+//#include <ext/pb_ds/assoc_container.hpp>
+//using namespace __gnu_pbds;
+#include <iostream>
+#include <fstream>
+#include <algorithm>
+#include <vector>
+#include <stack>
+#include <queue>
+#include <math.h>
+#include <set>
+#include <map>
+#include <string>
+#include <tuple>
+#include <numeric>
+#include <climits>
+#include <bitset>
+#include <iomanip>
+#include <random>
+#include <ctime>
+
+using namespace std;
+
+typedef long long ll;
+
+ll MOD = 1e9 + 7;
+const ll MAXN = 1e6 + 1;
+
+ll powmod(ll a, ll b) {
+    a %= MOD;
+    if (a == 0 && b == 0) {
+        return 1;
+    }
+    if (a == 0) {
+        return 0;
+    }
+    if (b == 0) {
+        return 1;
+    }
+    
+    ll ret;
+    if (b%2 == 1) {
+        ret = (a%MOD * powmod(a, b-1)%MOD)%MOD;
+    } else {
+        ret = powmod(a, b/2)%MOD;
+        ret = (ret%MOD * ret%MOD)%MOD;
+    }
+
+    return ret;
+}
+
+ll inv(ll num) {
+    return powmod(num, MOD-2);
+}
+
+void solve(ll ca)
+{
+    //Read in the input
+    ll n;
+    cin >> n;
+    
+    ll x[n], k[n];
+    for (ll i = 0; i < n; i++) {
+        cin >> x[i] >> k[i];
+    }
+    
+    //To compute the number of divisors, just take the product of all (k[i]+1)
+    //To compute the sum of divisors, just take the product of all (1 + x[i] + x[i]^2 + . . . + x[i]^k). To calculate the sum for each index, just use a geometric series formula
+    ll numb = 1, sum = 1;
+    for (ll i = 0; i < n; i++) {
+        numb = (numb%MOD * (k[i]+1)%MOD)%MOD;
+        
+        //Use geometric series formula
+        ll numerator = (powmod(x[i], k[i]+1)%MOD - 1 + MOD)%MOD;
+        ll denominator = (x[i]%MOD - 1 + MOD)%MOD;
+        ll tsum = (numerator%MOD * inv(denominator)%MOD)%MOD;
+        
+        sum = (sum%MOD * tsum%MOD)%MOD;
+    }
+    
+    //Print the number and sum of divisors
+    cout << numb << " " << sum << " ";
+    
+    //check will be true if our number is a perfect square and false if otherwise.
+    bool check = true;
+    for (ll i = 0; i < n; i++) {
+        if (k[i]%2 == 1) {
+            check = false;
+        }
+    }
+    
+    //To calculate the product of the divisors, the formula is orig^(numb/2) where orig is the number whose prime factorization we were given and where numb is the number of divisors. This formula is only true if orig isn't a perfect square. If it is a perfect square, the formula is sqrt(orig)^numb. We will need to recompute numb mod 1e9 + 6 since it is an exponent. However while we are computing numb mod 1e9 + 6, if we come across an even value of k[i]+1 and our original number isn't a perfect square, then we'll multiply (k[i]+1)/2 to our answer to account for the division by 2 in the exponent in the formula for non-perfect squares. Note that this has to happen EXACTLY once
+    
+    //Compute the number of divisors modulo 1e9 + 6 while also dividing by 2 exactly once if the original number isn't a perfect square. We can't just multiply by inv(2) since 2 and 1e9 + 6 aren't coprime.
+    MOD = 1e9 + 6;
+    numb = 1; ll need = (check == true) ? 0 : 1;
+    for (ll i = 0; i < n; i++) {
+        if (k[i]%2 == 1 && need > 0) {
+            ll val = (k[i]+1)/2;
+            numb = (numb%MOD * val%MOD)%MOD;
+            need--;
+        } else {
+            numb = (numb%MOD * (k[i]+1)%MOD)%MOD;
+        }
+    }
+    
+    //Set the mod back to normal
+    MOD = 1e9 + 7;
+    
+    if (check) { //If our number is a perfect square, compute its square root and raise it to the power we calculated
+        ll orig = 1;
+        for (ll i = 0; i < n; i++) {
+            k[i]/=2;
+            orig = (orig%MOD * powmod(x[i], k[i])%MOD)%MOD;
+        }
+        cout << powmod(orig, numb) << endl;
+    } else { //Otherwise, compute the original number and raise it to the power we calculated (this power would have been divided by 2 in our previous calculation)
+        ll orig = 1;
+        for (ll i = 0; i < n; i++) {
+            orig = (orig%MOD * powmod(x[i], k[i])%MOD)%MOD;
+        }
+        
+        cout << powmod(orig, numb) << endl;
+    }
+    return;
+}
+
+int main()
+{
+    //mt19937 rng(0);
+    
+    //Fast IO
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    /*
+    freopen("sabotage.in", "r", stdin);
+    freopen("sabotage.out", "w", stdout);
+    */
+
+    ll t = 1;
+    //cin >> t;
+
+    ll co = 1;
+    while (t--) {
+        solve(co);
+        ++co;
+    }
+}

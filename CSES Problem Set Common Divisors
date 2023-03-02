@@ -1,0 +1,107 @@
+CSES Problem Set
+Common Divisors
+
+Code:
+#include <iostream>
+#include <stack>
+#include <queue>
+#include <algorithm>
+#include <set>
+#include <string>
+#include <map>
+#include <math.h>
+#include <vector>
+#include <climits>
+using namespace std;
+
+typedef int ll;
+
+const ll MAXN = 1e6 + 1; //1e6 is the maximum value since x_i <= 1e6
+
+//Build will store the prime factorization. In particular if a pair {a, b} is in the list, that means the prime factorization of the current element of the input array that we are checking has a factor of a^b where a is a prime number.
+vector<pair<ll, ll>> build;
+
+//divisors will store all the recursively generated prime factors of the current element in the input array
+vector<ll> divisors;
+
+void generate(ll ind, ll cur) {
+    if (ind == build.size()) {
+        divisors.push_back(cur);
+        return;
+    }
+    
+    ll ncur = cur;
+    for (ll k = 0; k <= build[ind].second; k++) {
+        generate(ind+1, ncur);
+        ncur *= build[ind].first;
+    }
+}
+
+void solve() {
+    //smallest prime number that divides a number
+    ll smallest[MAXN]; ll cnt[MAXN]; //cnt[i] stores the #of elements in the input array that number i is a divisor of
+    //Intialize everything
+    for (ll i = 0; i < MAXN; i++) {
+        smallest[i] = 1e7;
+        cnt[i] = 0;
+    }
+    
+    //Run the Sieve
+    for (ll i = 2; i < MAXN; i++) {
+        if (smallest[i] == 1e7) {
+            for (ll j = i; j < MAXN; j+=i) {
+                smallest[j] = min(smallest[j], i);
+            }
+        }
+    }
+
+    //Input the array
+    ll n; cin >> n; ll x;
+    for (ll i = 0; i < n; i++) {
+        cin >> x;
+        
+        //Reset the prime factorization and the divisors
+        build.clear(); divisors.clear();
+        
+        //Get the prime factorization
+        while (smallest[x] != 1e7) {
+            ll cur = smallest[x];
+            ll amt = 0;
+            
+            while (smallest[x] == cur) {
+                amt++;
+                x /= smallest[x];
+            }
+            
+            build.push_back({cur, amt});
+        }
+        
+        //Generate all divisors
+        generate(0, 1);
+        
+        //Increase the frequency for each divisor
+        for (auto el: divisors) {
+            cnt[el]++;
+        }
+    }
+    
+    //The answer is the largest number that is a divisor for at least 2 elements of the input array
+    for (ll i = MAXN-1; i >= 1; i--) {
+        if (cnt[i] >= 2) {
+            cout << i << endl;
+            return;
+        }
+    }
+}
+
+int main()
+{
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    ll t = 1;
+
+    while (t--) {
+        solve();
+    }
+}

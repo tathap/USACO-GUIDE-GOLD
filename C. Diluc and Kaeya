@@ -1,0 +1,155 @@
+C. Diluc and Kaeya
+Codeforces Round #724 (Div. 2)
+
+Code:
+//#include <bits/stdc++.h>
+//#include <ext/pb_ds/assoc_container.hpp>
+//using namespace __gnu_pbds;
+#include <iostream>
+#include <fstream>
+#include <algorithm>
+#include <vector>
+#include <stack>
+#include <queue>
+#include <math.h>
+#include <set>
+#include <map>
+#include <string>
+#include <tuple>
+#include <numeric>
+#include <climits>
+#include <bitset>
+#include <iomanip>
+#include <random>
+#include <ctime>
+
+using namespace std;
+
+//change the long long to int if you need to save memory/time really badly
+typedef long long ll;
+
+//Comment this define when working on interactive problems
+#define endl "\n"
+#define sqrt(n) sqrt((long double) n)
+
+const ll MAXN = 5e5 + 5;
+const ll ZER = 0;
+const ll ONE = 1;
+const ll INF = LLONG_MAX;
+const ll MOD = 998244353;
+
+ll min(ll a, ll b) {
+    if (a < b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+ 
+ll max(ll a, ll b) {
+    if (a > b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+
+ll mod(ll num) {
+    return (num >= MOD ? num % MOD : num);
+}
+
+ll __gcd(ll a, ll b) {
+    if (b == 0) {
+        return a;
+    }
+    
+    if (a == 0) {
+        return b;
+    }
+    
+    if (a < b) {
+        swap(a, b);
+    }
+    
+    return __gcd(b, a % b);
+}
+
+ll __lcm(ll a, ll b) {
+    ll prod = a*b;
+    return prod/__gcd(a, b);
+}
+
+void solve(ll ca)
+{
+    ll n;
+    cin >> n;
+    
+    string s;
+    cin >> s;
+    
+    //Compute prefix sums on the number of D's and K's respectively
+    ll ps[n+1][2];
+    ps[0][0] = 0;
+    ps[0][1] = 0;
+    
+    for (ll i = 1; i <= n; i++) {
+        ps[i][0] = ps[i-1][0];
+        ps[i][1] = ps[i-1][1];
+        if (s[i-1] == 'D') {
+            ps[i][0]++;
+        } else {
+            ps[i][1]++;
+        }
+    }
+    
+    //ma[{i, j}] is the most number of subarrays that we can split so far such that the ratio of D's to K's is the same as i to j
+    map<pair<ll, ll>, ll> ma;
+    for (ll i = 1; i <= n; i++) {
+        //If all characters in the current prefix are D's or are all K's, we can have each character be its own subarray
+        if (ps[i][0] == i || ps[i][1] == i) {
+            cout << i << " ";
+        } else {
+            //Count the number of D's and K's and simplify the ratio using their gcd
+            ll a = ps[i][0];
+            ll b = ps[i][1];
+            ll gc = __gcd(a, b);
+            a /= gc;
+            b /= gc;
+            
+            //If this ratio didn't exist in the map, it's brand new, the answer for the prefix is 1, and we need to put it in the map for next time
+            if (ma.find({a, b}) == ma.end()) {
+                cout << 1 << " ";
+                ma[{a, b}] = 1;
+            } else { //Otherwise there was already a previous prefix that could be split up that way, meaning that we can add 1 to that for our current prefix by using those previous subarrays and then using the remaining rightmost characters in our prefix as their own subarray. Then update the map
+                cout << ma[{a, b}]+1 << " ";
+                ma[{a, b}]++;
+            }
+        }
+    }
+    cout << endl;
+    
+    return;
+}
+
+int main()
+{
+    //mt19937 rng(0);
+    
+    //Fast IO
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    /*
+    freopen("sabotage.in", "r", stdin);
+    freopen("sabotage.out", "w", stdout);
+    */
+    
+    ll t = 1;
+    cin >> t;
+
+    ll co = 1;
+    while (t--) {
+        solve(co);
+        ++co;
+    }
+}

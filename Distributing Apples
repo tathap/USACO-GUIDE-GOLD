@@ -1,0 +1,106 @@
+Distributing Apples
+Mathematics:
+
+Code:
+//#include <bits/stdc++.h>
+//#include <ext/pb_ds/assoc_container.hpp>
+//using namespace __gnu_pbds;
+#include <iostream>
+#include <fstream>
+#include <algorithm>
+#include <vector>
+#include <stack>
+#include <queue>
+#include <math.h>
+#include <set>
+#include <map>
+#include <string>
+#include <tuple>
+#include <numeric>
+#include <climits>
+#include <bitset>
+#include <iomanip>
+#include <random>
+#include <ctime>
+
+using namespace std;
+
+typedef long long ll;
+
+const ll MOD = 1e9 + 7;
+const ll MAXN = 5e6 + 1;
+
+ll powmod(ll a, ll b) {
+    a %= MOD;
+    if (a == 0 && b == 0) {
+        return 1;
+    }
+    if (a == 0) {
+        return 0;
+    }
+    if (b == 0) {
+        return 1;
+    }
+    
+    ll ret;
+    if (b%2 == 1) {
+        ret = (a%MOD * powmod(a, b-1)%MOD)%MOD;
+    } else {
+        ret = powmod(a, b/2)%MOD;
+        ret = (ret%MOD * ret%MOD)%MOD;
+    }
+
+    return ret;
+}
+
+ll fact[MAXN];
+void precompute()
+{
+    fact[0] = 1;
+    for (ll i = 1; i < MAXN; i++) {
+        fact[i] = (i * fact[i - 1]) % MOD;
+    }
+}
+
+ll inv(ll num) {
+    return powmod(num, MOD-2);
+}
+
+ll nCk(ll n, ll k) {
+    return ((fact[n]*inv(fact[k])%MOD)*inv(fact[n-k]))%MOD;
+}
+
+//Use stars and bars. The answer is (n+m-1)C(n-1)
+void solve(ll ca)
+{
+    ll n, m;
+    cin >> n >> m;
+    
+    cout << nCk(n+m-1, n-1) << endl;
+    return;
+}
+
+int main()
+{
+    //mt19937 rng(0);
+    
+    //Fast IO
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    /*
+    freopen("sabotage.in", "r", stdin);
+    freopen("sabotage.out", "w", stdout);
+    */
+
+    precompute();
+    
+    ll t = 1;
+    //cin >> t;
+
+    ll co = 1;
+    while (t--) {
+        solve(co);
+        ++co;
+    }
+}

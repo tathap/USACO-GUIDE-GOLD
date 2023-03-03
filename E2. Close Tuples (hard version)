@@ -1,0 +1,154 @@
+E2. Close Tuples (hard version)
+Codeforces Round #690 (Div. 3)
+
+Code:
+//#include <bits/stdc++.h>
+//#include <ext/pb_ds/assoc_container.hpp>
+//using namespace __gnu_pbds;
+#include <iostream>
+#include <fstream>
+#include <algorithm>
+#include <vector>
+#include <stack>
+#include <queue>
+#include <math.h>
+#include <set>
+#include <map>
+#include <string>
+#include <tuple>
+#include <numeric>
+#include <climits>
+#include <bitset>
+#include <iomanip>
+#include <random>
+#include <ctime>
+
+using namespace std;
+
+typedef long long ll;
+
+const ll MOD = 1e9 + 7;
+const ll MAXN = 5e6 + 1;
+
+ll powmod(ll a, ll b) {
+    a %= MOD;
+    if (a == 0 && b == 0) {
+        return 1;
+    }
+    if (a == 0) {
+        return 0;
+    }
+    if (b == 0) {
+        return 1;
+    }
+    
+    ll ret;
+    if (b%2 == 1) {
+        ret = (a%MOD * powmod(a, b-1)%MOD)%MOD;
+    } else {
+        ret = powmod(a, b/2)%MOD;
+        ret = (ret%MOD * ret%MOD)%MOD;
+    }
+
+    return ret;
+}
+
+ll fact[MAXN];
+void precompute()
+{
+    fact[0] = 1;
+    for (ll i = 1; i < MAXN; i++) {
+        fact[i] = (i * fact[i - 1]) % MOD;
+    }
+}
+
+ll inv(ll num) {
+    return powmod(num, MOD-2);
+}
+
+ll nCk(ll n, ll k) {
+    return ((fact[n]*inv(fact[k])%MOD)*inv(fact[n-k]))%MOD;
+}
+
+void solve(ll ca)
+{
+    ll n, m, k;
+    cin >> n >> m >> k;
+    
+    ll cnt[n+1]; //cnt[i] stores the number of times value i appears in the input array
+    for (ll i = 0; i <= n; i++) {
+        cnt[i] = 0;
+    }
+    
+    for (ll i = 0; i < n; i++) {
+        ll a; cin >> a;
+        cnt[a]++;
+    }
+    
+    //psum is a prefix sum array on cnt
+    ll psum[n+1]; psum[0] = 0;
+    for (ll i = 1; i <= n; i++) {
+        psum[i] = psum[i-1] + cnt[i];
+    }
+    
+    //answer
+    ll ans = 0;
+    
+    //Iterate on the minimum type of value that we are going to pick as our minimum.
+    for (ll mini = 1; mini <= n; mini++) {
+        //ub is the largest type of value that we can possibly pick
+        ll ub = min(mini+k, n);
+        
+        //amt is the #of instances in the input of all values in the range (mini, ub]. If the total sum plus the frequency of the current minimum value is less than m, then it's impossible to create an m-tuple using the current minimum value as our minimum.
+        ll amt = psum[ub] - psum[mini];
+        if (amt + cnt[mini] < m) {
+            continue;
+        }
+                
+        //Iterate on how many times we are going to use the minimum value in our m-tuple. The asymptomatic time complexity of this part is O(n) over all the iterations in the problem.
+        for (ll j = 1; j <= cnt[mini]; j++) {
+            //If the amount in the range (mini, ub] isn't enough to create an m-tuple using only j instances of the current minimum value, then we need to wait a little longer
+            if (amt < m-j) {
+                continue;
+            }
+            
+            //If we've picked more instances of the minimum value than m, that means we can't keep iterating since you can't put more than m elements into an m-tuple
+            if (j > m) {
+                break;
+            }
+                        
+            //The number of ways we can add to our answer is nCk(cnt[mini], j) * nCk(amt, m-j). This represents the #of ways to choose j instances of the current minimum value multiplied by the #of ways to pick the remaining instances needed for the m-tuple from all the other values we can use in the range (mini, ub]
+            ll numbways = (nCk(cnt[mini], j)%MOD * nCk(amt, m-j)%MOD)%MOD;
+            ans = (ans%MOD + numbways%MOD)%MOD;
+        }
+    }
+    
+    //Print the answer
+    cout << ans << endl;
+    return;
+}
+
+int main()
+{
+    //mt19937 rng(0);
+    
+    //Fast IO
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    /*
+    freopen("sabotage.in", "r", stdin);
+    freopen("sabotage.out", "w", stdout);
+    */
+
+    precompute();
+    
+    ll t = 1;
+    cin >> t;
+
+    ll co = 1;
+    while (t--) {
+        solve(co);
+        ++co;
+    }
+}

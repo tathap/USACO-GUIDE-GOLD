@@ -1,0 +1,141 @@
+D. Almost Identity Permutations
+Educational Codeforces Round 32
+
+Code:
+//#include <bits/stdc++.h>
+//#include <ext/pb_ds/assoc_container.hpp>
+//using namespace __gnu_pbds;
+#include <iostream>
+#include <fstream>
+#include <algorithm>
+#include <vector>
+#include <stack>
+#include <queue>
+#include <math.h>
+#include <set>
+#include <map>
+#include <string>
+#include <tuple>
+#include <numeric>
+#include <climits>
+#include <bitset>
+#include <iomanip>
+#include <random>
+#include <ctime>
+
+using namespace std;
+
+typedef long long ll;
+
+const ll MOD = 1e9 + 7;
+const ll MAXN = 5e6 + 1;
+
+ll powmod(ll a, ll b) {
+    a %= MOD;
+    if (a == 0 && b == 0) {
+        return 1;
+    }
+    if (a == 0) {
+        return 0;
+    }
+    if (b == 0) {
+        return 1;
+    }
+    
+    ll ret;
+    if (b%2 == 1) {
+        ret = (a%MOD * powmod(a, b-1)%MOD)%MOD;
+    } else {
+        ret = powmod(a, b/2)%MOD;
+        ret = (ret%MOD * ret%MOD)%MOD;
+    }
+
+    return ret;
+}
+
+ll fact[MAXN];
+void precompute()
+{
+    fact[0] = 1;
+    for (ll i = 1; i < MAXN; i++) {
+        fact[i] = (i * fact[i - 1]) % MOD;
+    }
+}
+
+ll inv(ll num) {
+    return powmod(num, MOD-2);
+}
+
+//Note that because k is small, we can manually compute nCk quickly. We have to do this since no modulo operator is defined to help our calculations
+ll nCk(ll n, ll k) {
+    ll ret = 1;
+    for (ll i = n; i > n-k; i--) {
+        ret *= i;
+    }
+    
+    for (ll i = 1; i <= k; i++) {
+        ret/=i;
+    }
+    
+    return ret;
+}
+
+//Observation: We are basically asked to find the #of permutations such that at most k indices aren't fixed points. That is they are not at their proper place. So if we can find the answer such that exactly 0 indices aren't fixed, exactly 1 index isn't fixed, . . . , and exactly 4 indices aren't fixed, then for the input k, the answer is the sum of the answers we found for all i indices that need to be fixed where i <= k.
+void solve(ll ca)
+{
+    ll n, k;
+    cin >> n >> k;
+    
+    //The answer if no indices aren't fixed is 1, the sorted permutation. It's impossible for exactly 1 index to not be fixed, so we can group k = 0 and k = 1 to have the same answer
+    ll ans = 1;
+    if (k == 0 || k == 1) {
+        cout << ans << endl;
+        return;
+    }
+    
+    //The answer if 2 indices aren't fixed is (n)C(2). This is b/c we can pick 2 positions to be unfixed and swap them.
+    ans += nCk(n, 2);
+    if (k == 2) {
+        cout << ans << endl;
+        return;
+    }
+    
+    //The answer if 3 indices aren't fixed is 2 * (n)C(3). This is b/c we can pick 3 positions to be unfixed. The #of derangements of a group of 3 elements is 2. So there are 2 ways so that all 3 positions aren't fixed.
+    ans += (2*nCk(n, 3));
+    if (k == 3) {
+        cout << ans << endl;
+        return;
+    }
+    
+    //The answer if 4 indices aren't fixed is 9 * (n)C(4). This is b/c we can pick 4 positions to be unfixed. The #of derangements of a group of 4 elements is 9. So there are 9 ways so that all 4 positions aren't fixed
+    ans += (9*nCk(n, 4));
+    
+    cout << ans << endl;
+    
+    return;
+}
+
+int main()
+{
+    //mt19937 rng(0);
+    
+    //Fast IO
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    /*
+    freopen("sabotage.in", "r", stdin);
+    freopen("sabotage.out", "w", stdout);
+    */
+
+    //precompute();
+    
+    ll t = 1;
+    //cin >> t;
+
+    ll co = 1;
+    while (t--) {
+        solve(co);
+        ++co;
+    }
+}

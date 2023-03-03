@@ -1,0 +1,127 @@
+USACO 2021 January Contest, Bronze
+Problem 3. Just Stalling
+
+Code:
+//#include <bits/stdc++.h>
+//#include <ext/pb_ds/assoc_container.hpp>
+//using namespace __gnu_pbds;
+#include <iostream>
+#include <fstream>
+#include <algorithm>
+#include <vector>
+#include <stack>
+#include <queue>
+#include <math.h>
+#include <set>
+#include <map>
+#include <string>
+#include <tuple>
+#include <numeric>
+#include <climits>
+#include <bitset>
+#include <iomanip>
+#include <random>
+#include <ctime>
+
+using namespace std;
+
+typedef long long ll;
+
+const ll MOD = 1e9 + 7;
+const ll MAXN = 5e6 + 1;
+
+ll powmod(ll a, ll b) {
+    a %= MOD;
+    if (a == 0 && b == 0) {
+        return 1;
+    }
+    if (a == 0) {
+        return 0;
+    }
+    if (b == 0) {
+        return 1;
+    }
+    
+    ll ret;
+    if (b%2 == 1) {
+        ret = (a%MOD * powmod(a, b-1)%MOD)%MOD;
+    } else {
+        ret = powmod(a, b/2)%MOD;
+        ret = (ret%MOD * ret%MOD)%MOD;
+    }
+
+    return ret;
+}
+
+ll fact[MAXN];
+void precompute()
+{
+    fact[0] = 1;
+    for (ll i = 1; i < MAXN; i++) {
+        fact[i] = (i * fact[i - 1]) % MOD;
+    }
+}
+
+ll inv(ll num) {
+    return powmod(num, MOD-2);
+}
+
+ll nCk(ll n, ll k) {
+    return ((fact[n]*inv(fact[k])%MOD)*inv(fact[n-k]))%MOD;
+}
+
+//Algorithm: An n*2^n dp will work. dp[i][j] is the #of ways to assign the first i cows. j is a bitmask that stores all the stalls which have been currently optimized. Then transitions and space optimization are easy. However there's an easier nlogn solution.
+
+//Algorithm: Sort the cows and the stalls. If we look at the tallest cow, we can easily compute with binary search the #of stalls it should go in. Then if we look at the second tallest cow and so on, calculate the #of stalls it can go in with binary search. However we need to subtract from that the #of stalls that have been occupied, since if we're looking at cow i, all the cows j > i have already been asigned. So we can just ignore all stalls after position i to compute the answer. Finally multiply all the counts we got for each cow
+void solve(ll ca)
+{
+    ll n;
+    cin >> n;
+    
+    ll a[n], b[n];
+    for (ll i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    for (ll i = 0; i < n; i++) {
+        cin >> b[i];
+    }
+    
+    sort(a, a+n); sort(b, b+n);
+    
+    ll ans = 1;
+    for (ll i = n-1; i >= 0; i--) {
+        ll ind = lower_bound(b, b+n, a[i]) - b;
+        ind--;
+        
+        ans *= (i-ind);
+    }
+    
+    cout << ans << endl;
+    
+    return;
+}
+
+int main()
+{
+    //mt19937 rng(0);
+    
+    //Fast IO
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    /*
+    freopen("sabotage.in", "r", stdin);
+    freopen("sabotage.out", "w", stdout);
+    */
+
+    //precompute();
+    
+    ll t = 1;
+    //cin >> t;
+
+    ll co = 1;
+    while (t--) {
+        solve(co);
+        ++co;
+    }
+}

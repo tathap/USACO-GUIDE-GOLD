@@ -1,0 +1,91 @@
+USACO 2018 December Contest, Gold
+Problem 2. Cowpatibility
+
+Note that I only got tcs 1-7 and 11 while TLE-ing on tcs 8-10. The algo is correct but needs slight optimizations.
+
+Code:
+#include <bits/stdc++.h>
+#include <ext/pb_ds/assoc_container.hpp>
+using namespace std;
+using namespace __gnu_pbds;
+
+typedef long long ll;
+
+const ll MOD = 1e9 + 7;
+const ll MAXN = 5e4 + 1;
+
+//Algorithm: Let's iterate over the cows. At the current cow i, we'll count the #of cows who we have already seen who share at least 1 flavor. We'll maintain this total sum over all cows to count the total #of compatible pairs. Then we'll subtract this from n*(n-1)/2 which is the total number of pairs. This will give us the answer.
+
+//At the current cow, we'll use PIE (Principle of Inclusion Exclusion). Let's say that the current cow likes ice cream a1, a2, a3, a4, and a5. Count the #of cows who have an a1 plus the #of cows who have an a2 plus the #of cows who have an a3 + . . . plus the #of cows who have an a5. However, we've overcounted and we need to subtract all the counts of subsets of 2 icecreams. Now we've undercounted and we need to add all the counts of subsets of 3 icecreams. Now we've overcounted and we need to subtract all the counts of subsets of 4 icecreams. Now we've overcounted and we need to add all counts of subsets of 5 icecreams. So for each cow we'll consider all subsets of its icecreams. If the #of ice creams in the subset is even, we'll subtract it from the #of cows we can pair with cow i. Otherwise we'll add it to the #of cows we can pair with cow i
+void solve(ll ca) {
+  //N is the #of cows
+  ll n;
+  cin >> n;
+
+  //Modified hash table that's faster
+  gp_hash_table<string, ll> freq; //Stores a count of subsets. Note that we can represent any subset as a string. For example ice creams 2 3 and 5 would be represented as the string "2*3*5". Note that our subsets are only of length 5 and thus bounded by 32*n.
+
+  ll favorites[5];
+  ll ans = n * (n - 1) / 2; //Total #of pairs
+
+  //Iterate over the cows and read their favorite ice creams
+  for (ll i = 0; i < n; i++) {
+    for (ll j = 0; j < 5; j++) {
+      cin >> favorites[j];
+    }
+    //Sort the ice creams to make inmplementation nice
+    sort(favorites, favorites+5);
+    ll tans = 0; //Number of cows who we can pair with cow i
+
+    //Generate all subsets of ice creams for the current cow except the empty subset
+    for (ll k = 1; k < (1 << 5); k++) {
+      //We'll store the current subset as a string while also computing the #of ice creams in the current subset
+      string v = "";
+      ll cnt = 0;
+      for (ll j = 0; j < 5; j++) {
+        if (k & (1 << j)) {
+          string temp = to_string(favorites[j]);
+          v += temp;
+          v += "*";
+          cnt++;
+        }
+      }
+
+      //Update the frequency of the current subset
+      freq[v]++;
+
+      //If the length of the subset is odd, add the answer by the frequency. Note we're ignoring 1 instance which is at our current cow. If the length of the subset is odd, subtract from the answer instead
+      if (cnt&1) {
+        tans += (freq[v] - 1);
+      } else {
+        tans -= (freq[v] - 1);
+      }
+    }
+
+    //Subtract from the total #of pairs the #of good pairs with cow i
+    ans -= tans;
+  }
+
+  //Print the #of bad pairs
+  cout << ans << endl;
+
+  return;
+}
+
+int main() {
+  // Fast IO
+  ios::sync_with_stdio(false);
+  cin.tie(nullptr);
+
+  freopen("cowpatibility.in", "r", stdin);
+  freopen("cowpatibility.out", "w", stdout);
+
+  ll t = 1;
+  // cin >> t;
+
+  ll co = 1;
+  while (t--) {
+    solve(co);
+    ++co;
+  }
+}

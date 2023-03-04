@@ -1,0 +1,115 @@
+Bubble Cup V8 H Bots
+DMOJ
+
+Code:
+//#include <bits/stdc++.h>
+//#include <ext/pb_ds/assoc_container.hpp>
+//using namespace __gnu_pbds;
+#include <iostream>
+#include <fstream>
+#include <algorithm>
+#include <vector>
+#include <stack>
+#include <queue>
+#include <math.h>
+#include <set>
+#include <map>
+#include <string>
+#include <tuple>
+#include <numeric>
+#include <climits>
+#include <bitset>
+#include <iomanip>
+#include <random>
+#include <ctime>
+
+using namespace std;
+
+typedef long long ll;
+
+const ll MOD = 1e9 + 7;
+const ll MAXN = 5e6 + 1;
+
+ll powmod(ll a, ll b) {
+    a %= MOD;
+    if (a == 0 && b == 0) {
+        return 1;
+    }
+    if (a == 0) {
+        return 0;
+    }
+    if (b == 0) {
+        return 1;
+    }
+    
+    ll ret;
+    if (b%2 == 1) {
+        ret = (a%MOD * powmod(a, b-1)%MOD)%MOD;
+    } else {
+        ret = powmod(a, b/2)%MOD;
+        ret = (ret%MOD * ret%MOD)%MOD;
+    }
+
+    return ret;
+}
+
+ll fact[MAXN];
+void precompute()
+{
+    fact[0] = 1;
+    for (ll i = 1; i < MAXN; i++) {
+        fact[i] = (i * fact[i - 1]) % MOD;
+    }
+}
+
+ll inv(ll num) {
+    return powmod(num, MOD-2);
+}
+
+ll nCk(ll n, ll k) {
+    return ((fact[n]*inv(fact[k])%MOD)*inv(fact[n-k]))%MOD;
+}
+
+//Algorithm: Let A denote a move by Sasha and B denote a move by Ira. Then each state is defined uniquely by some ordering of A's and B's such that the total number of A's is less than or equal to n and the total number of B's is less than or equal to n. For example if we have 0 A's and 0 B's, then there is only 1 ordering that represents the start state. If we use A 2 times and B 1 time, then there are 3 choices. Note that this problem is asking us to sum the following expression (i+j)!/(i!j!) for all 0 <= i, j <= n. Note that (i+j)!/(i!j!) is equal to (i+j)C(i) = (i+j)C(j). This will be important later on. Anyways, the previous total sum will count all unique orderings of A's and B's such that the total number of A's is less than or equal to n and the total number of B's is less than or equal to n. Let's fix i. Then note that this expression turns into (i)C(i) + (i+1)C(i) + (i+2)C(i) + . . . + (i+n)C(i) for all 0 <= j <= n. This sum is equal to (i+n+1)C(i+1) by the Hockey Stick Identity.
+void solve(ll ca)
+{
+    ll n;
+    cin >> n;
+    
+    ll ans = 0;
+    
+    //Fix i and use the hockey stick to handle 0 <= j <= n
+    for (ll i = 0; i <= n; i++) {
+        ans = (ans%MOD + nCk(i+n+1, i+1)%MOD)%MOD;
+    }
+    
+    cout << ans << endl;
+    
+    return;
+}
+
+int main()
+{
+    //mt19937 rng(0);
+    
+    //Fast IO
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    /*
+    freopen("sabotage.in", "r", stdin);
+    freopen("sabotage.out", "w", stdout);
+    */
+
+    //Precompute binomial coefficients
+    precompute();
+    
+    ll t = 1;
+    //cin >> t;
+
+    ll co = 1;
+    while (t--) {
+        solve(co);
+        ++co;
+    }
+}

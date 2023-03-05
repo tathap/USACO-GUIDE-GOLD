@@ -1,0 +1,171 @@
+USACO 2019 January Contest, Gold
+Problem 1. Cow Poetry
+
+Code:
+#include <iostream>
+#include <fstream>
+#include <algorithm>
+#include <vector>
+#include <stack>
+#include <queue>
+#include <math.h>
+#include <set>
+#include <map>
+#include <string>
+#include <tuple>
+#include <numeric>
+#include <climits>
+#include <bitset>
+#include <iomanip>
+#include <random>
+#include <ctime>
+using namespace std;
+
+typedef long long ll;
+
+const ll MOD = 1e9 + 7;
+const ll MAXN = 1e6 + 1;
+
+ll fact[MAXN];
+void precompute()
+{
+   fact[0] = 1;
+   for (ll i = 1; i < MAXN; i++) {
+       fact[i] = (i * fact[i - 1]) % MOD;
+   }
+}
+
+ll powmod(ll a, ll b){
+    a %= MOD;
+    if (a == 0) return 0;
+    ll product = 1;
+    while(b > 0){
+        if (b&1){    // you can also use b % 2 == 1
+            product *= a;
+            product %= MOD;
+            --b;
+        }
+        a *= a;
+        a %= MOD;
+        b /= 2;    // you can also use b >> 1
+    }
+    return product;
+}
+
+ll max(ll a, ll b) {
+    if (a > b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+
+ll min(ll a, ll b) {
+    if (a < b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+
+
+//calculates the inverse of a number mod MOD
+ll inv(ll a) {
+    return powmod(a, MOD - 2);
+}
+
+//What is the problem even saying: It's asking us to compute the #of poems such that each line has a total length of k, there are m lines, and all lines that have the same rhyme scheme must also all end in a word with the same rhyme class. Note that lines part of different rhyme schemes may or may not end with a word of the same rhyme class.
+//Note that a word can be used multiple times and that only the ending word of a line matters to determine the line's rhyme class. This motivates a knapsack dp
+
+void solve(ll ca) {
+    //Read in the input and words
+    ll n, m, k;
+    cin >> n >> m >> k;
+    
+    pair<ll, ll> words[n];
+    for (ll i = 0; i < n; i++) {
+        ll s, c;
+        cin >> s >> c;
+        words[i] = {s, c};
+    }
+    
+    //We will let dp[i] be the #of ways to construct a list of words with a length i.
+    ll dp[k+1];
+    for (ll j = 0; j <= k; j++) {
+        dp[j] = 0;
+    }
+    
+    //Run a knapsack. Note that we are iterating over the position and then the word since a word can be used multiple times
+    dp[0] = 1;
+    for (ll j = 0; j <= k; j++) {
+        for (ll i = 0; i < n; i++) {
+            if (dp[j] != 0 && j+words[i].first <= k) {
+                dp[j+words[i].first] = (dp[j+words[i].first] + dp[j])%MOD;
+            }
+        }
+    }
+
+    //We will let dp2[i] be the #of ways to pick a list of words such that the total length of the words is k and the last word is part of rhyme class i
+    ll dp2[n+1];
+    for (ll i = 0; i <= n; i++) {
+        dp2[i] = 0;
+    }
+    
+    //We will iterate over each word and try to use it as the last word in a line of length k. Then we can count the #of ways to build the previous character using any words we want and we can add that to the dp value of the rhyme class of the current word
+    for (ll i = 0; i < n; i++) {
+        dp2[words[i].second] = (dp2[words[i].second] + dp[k-words[i].first])%MOD;
+    }
+    
+    //rhyme stores the #of the m lines with each character
+    ll rhyme[26];
+    for (ll i = 0; i < 26; i++) {
+        rhyme[i] = 0;
+    }
+    for (ll i = 0; i < m; i++) {
+        char scheme; cin >> scheme;
+        ll ind = scheme - 'A';
+        rhyme[ind]++;
+    }
+
+    //We will find the answer for each character and multiply them all with each other
+    ll ans = 1;
+    for (ll i = 0; i < 26; i++) {
+        //If no lines use the current character as their rhyme scheme, we don't need to do anything with it
+        if (rhyme[i] == 0) {
+            continue;
+        }
+        
+        //To count the #of ways for the current character, perform the following algorithm. We can use each possible rhyme class. Let's say we picked a rhyme class j and we have rhyme[i] lines that need to end with rhyme class j. The # of ways to do this for one line is dp2[j] and the #of ways to do this for rhyme[i] lines is dp2[j]^rhyme[i]. Add this exponentiation for all rhyme classes j. This total sum is the #of ways to make all the lines in the current rhyme scheme end with the same rhyme class
+        ll tans = 0;
+        for (ll j = 1; j <= n; j++) {
+            if (dp2[j] == 0) {
+                continue;
+            }
+            //powmod allows us to exponentiate in logarithmic time
+            tans = (tans%MOD + powmod(dp2[j], rhyme[i])%MOD)%MOD;
+        }
+        
+        //Multiply the sum we got with the answer
+        ans = (ans%MOD * tans%MOD)%MOD;
+    }
+    
+    //Print the answer
+    cout << ans << endl;
+}
+
+int main() {
+    mt19937 rng(0);
+    // Fast IO
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    freopen("poetry.in", "r", stdin);
+    freopen("poetry.out", "w", stdout);
+    
+    ll t = 1;
+    ll co = 0;
+    while (t--) {
+        solve(co);
+        co++;
+    }
+}

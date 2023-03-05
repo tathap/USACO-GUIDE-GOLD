@@ -1,0 +1,127 @@
+USACO 2020 February Contest, Gold
+Problem 2. Help Yourself
+
+Code:
+#include <iostream>
+#include <fstream>
+#include <algorithm>
+#include <vector>
+#include <stack>
+#include <queue>
+#include <math.h>
+#include <set>
+#include <map>
+#include <string>
+#include <tuple>
+#include <numeric>
+#include <climits>
+#include <bitset>
+#include <iomanip>
+#include <random>
+#include <ctime>
+using namespace std;
+
+typedef long long ll;
+
+const ll MOD = 1e9 + 7;
+const ll MAXN = 1e6 + 1;
+
+ll fact[MAXN];
+void precompute()
+{
+   fact[0] = 1;
+   for (ll i = 1; i < MAXN; i++) {
+       fact[i] = (i * fact[i - 1]) % MOD;
+   }
+}
+
+ll powmod(ll a, ll b){
+    a %= MOD;
+    if (a == 0) return 0;
+    ll product = 1;
+    while(b > 0){
+        if (b&1){    // you can also use b % 2 == 1
+            product *= a;
+            product %= MOD;
+            --b;
+        }
+        a *= a;
+        a %= MOD;
+        b /= 2;    // you can also use b >> 1
+    }
+    return product;
+}
+
+
+//calculates the inverse of a number mod MOD
+ll inv(ll a) {
+    return powmod(a, MOD - 2);
+}
+
+//Algorithm: Let's try to add the contribution of each segment to the total answer. How many times will a segment [i, j] be counted. Let's count a segment once when it's the start of some connected region of segments in one subset. So we need to count the number of subsets where the current segment [i, j] serves as the start of some connected region of segments in this subset. How do we do this?
+//EXAMPLE:
+//    (A)           (B)
+// ---------     --------
+//     --------- (current segment)
+//           -------
+// (D)          (C)
+// --
+//Notice that in order for the current segment to be the start of a connected region of segments in a subset, that subset can't have any segments that are active in [i-1, i]. This is b/c if both segments are included, then this other segment would force our current segment to not be a start. So we need to find all segments that aren't acitve in [i-1, i]. If we look at our example, segments B C and D are the only segments that satisfy this requirement. A doesn't work sice if A and the current segment were in the same subset, our current segment would have no chance of being the start of a connected region of segments.
+//Algorithm: So how do we count the #of segments that aren't active in [i-1, i]? Let's let start[i] be the #of segments that start at position i, i+1, .... 2n while end[i] be the #of segments that end at position 1, 2, . . . i. We can precompute start and end using all the segments and then building them as prefix sums. Then for the current segment [i, j], the #of segments not active in [i-1, i] would be end[i-1] + start[i+1] (note it's not start[i] since we don't want to include the current segment and all the start and end points are unique. Now let's say that end[i-1] + start[i+1] = k. That is we have k valid segments not including the current segment. Then there are 2^k possible subsets that allow the current segment to be the leader of a connected region of segments. Note that this counts the empty subset once (this works since that represents our current segment being by itself, which also needs to be counted once).
+void solve(ll ca) {
+    //Read the input
+    ll n; cin >> n;
+    pair<ll, ll> sg[n];
+    for (ll i = 0; i < n; i++) {
+        cin >> sg[i].first >> sg[i].second;
+    }
+        
+    //Precompute powers of 2
+    ll pow2[n+1]; pow2[0] = 1;
+    for (ll i = 1; i <= n; i++) {
+        pow2[i] = (pow2[i-1]%MOD * 2)%MOD;
+    }
+    
+    //Compute start and and
+    ll ends[2*n + 1]; ll starts[2*n + 1];
+    for (ll i = 0; i <= 2*n; i++) {
+        ends[i] = 0;
+        starts[i] = 0;
+    }
+    for (ll i = 0; i < n; i++) {
+        ends[sg[i].second]++;
+        starts[sg[i].first]++;
+    }
+    for (ll i = 1; i <= 2*n; i++) {
+        ends[i] += ends[i-1];
+    }
+    for (ll i = 2*n - 1; i >= 0; i--) {
+        starts[i] += starts[i+1];
+    }
+    
+    //Compute the answer
+    ll ans = 0;
+    for (ll i = 0; i < n; i++) {
+        ll extra = ends[sg[i].first-1] + starts[sg[i].first+1];
+        ans = (ans%MOD + pow2[extra]%MOD)%MOD;
+    }
+    
+    cout << ans << endl;
+}
+
+int main() {
+    mt19937 rng(0);
+    // Fast IO
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    freopen("help.in", "r", stdin);
+    freopen("help.out", "w", stdout);
+    
+    ll t = 1;
+    ll co = 0;
+    while (t--) {
+        solve(co);
+        co++;
+    }
+}

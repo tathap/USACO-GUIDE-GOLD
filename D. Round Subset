@@ -1,0 +1,154 @@
+D. Round Subset
+Educational Codeforces Round 26
+
+Code:
+#include <iostream>
+#include <fstream>
+#include <algorithm>
+#include <vector>
+#include <stack>
+#include <queue>
+#include <math.h>
+#include <set>
+#include <map>
+#include <string>
+#include <tuple>
+#include <numeric>
+#include <climits>
+#include <bitset>
+#include <iomanip>
+#include <random>
+#include <ctime>
+using namespace std;
+
+typedef long long ll;
+
+const ll MOD = 1e9 + 7;
+const ll MAXN = 1e6 + 1;
+
+ll fact[MAXN];
+void precompute()
+{
+   fact[0] = 1;
+   for (ll i = 1; i < MAXN; i++) {
+       fact[i] = (i * fact[i - 1]) % MOD;
+   }
+}
+
+ll powmod(ll a, ll b){
+    a %= MOD;
+    if (a == 0) return 0;
+    ll product = 1;
+    while(b > 0){
+        if (b&1){    // you can also use b % 2 == 1
+            product *= a;
+            product %= MOD;
+            --b;
+        }
+        a *= a;
+        a %= MOD;
+        b /= 2;    // you can also use b >> 1
+    }
+    return product;
+}
+
+ll max(ll a, ll b) {
+    if (a > b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+
+ll min(ll a, ll b) {
+    if (a < b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+
+
+//calculates the inverse of a number mod MOD
+ll inv(ll a) {
+    return powmod(a, MOD - 2);
+}
+
+//Obeservation: Note that given a number, the total amount of ending zero's is just the minimum of the number of 2's and the number of 5's in its prime factorization. So this motivates us into performing some sort of knapsack on the # of 2's and 5's.
+//Let dp[i][j][l] be the maximum #of 2's we can get considering the first i numbers with a subset of size j that already has l 5's in its product. We can remove the first dimension using the rolling arrays technique and perform transitions in O(1).
+//The reason why we added the #of 5's as a dimension instead of the #of 2's is b/c the #of 5's is much smaller than the #of 2's, thus saving memory
+void solve(ll ca) {
+    //Read in input
+    ll n, k;
+    cin >> n >> k;
+    
+    //dp[i][j] = the maximum # of 2's considering a subset of size i with j 5's in its product. We've removed the first dimension.
+    //Note that the maximum possible #of 5's is 6000 if we consider the product of all the #s.
+    ll dp[k+1][6000];
+    for (ll i = 0; i <= k; i++) {
+        for (ll j = 0; j < 6000; j++) {
+            dp[i][j] = -1;
+        }
+    }
+    dp[0][0] = 0;
+    //we can initialize all the dp values to -1 since they haven't been achieved yet, except for dp[0][0] = 0 which is our base case
+    
+    //Perform the algorithm
+    for (ll i = 0; i < n; i++) {
+        //Read the number and count the #of 2's and 5's in its product
+        ll a; cin >> a;
+        ll cnt2 = 0; ll cnt5 = 0;
+        while (a%2 == 0) {
+            cnt2++;
+            a/=2;
+        }
+        while (a%5 == 0) {
+            cnt5++;
+            a/=5;
+        }
+        
+        //Now compute transitions. We can either use the current number or not.
+        ll dp2[k+1][6000];
+        for (ll l = 0; l <= k; l++) {
+            for (ll j = 0; j < 6000; j++) {
+                dp2[l][j] = dp[l][j];
+                //We need to make sure that we are only building from achieved states
+                if (l > 0 && j >= cnt5 && dp[l-1][j-cnt5] != -1) {
+                    dp2[l][j] = max(dp2[l][j], dp[l-1][j-cnt5]+cnt2);
+                }
+            }
+        }
+        
+        //Update dp
+        for (ll l = 0; l <= k; l++) {
+            for (ll j = 0; j < 6000; j++) {
+                dp[l][j] = dp2[l][j];
+            }
+        }
+    }
+    
+    //Now we need to print the max of (i, dp[k][i]) for all i. This is b/c i is the #of 5's while dp[k][i] is the #of 2's.
+    ll ans = 0; //Worst possible answer is 0 if no factors of 2 or 5 are present to pair
+    for (ll i = 0; i < 6000; i++) {
+        ans = max(ans, min(i, dp[k][i]));
+    }
+    
+    cout << ans << endl;
+}
+
+int main() {
+    mt19937 rng(0);
+    // Fast IO
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    /*
+    freopen("help.in", "r", stdin);
+    freopen("help.out", "w", stdout);
+    */
+    ll t = 1;
+    ll co = 0;
+    while (t--) {
+        solve(co);
+        co++;
+    }
+}

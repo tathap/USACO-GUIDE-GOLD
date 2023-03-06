@@ -1,0 +1,168 @@
+USACO 2020 US Open Contest, Gold
+Problem 3. Exercise
+
+Code:
+#include <iostream>
+#include <fstream>
+#include <algorithm>
+#include <vector>
+#include <stack>
+#include <queue>
+#include <math.h>
+#include <set>
+#include <map>
+#include <string>
+#include <tuple>
+#include <numeric>
+#include <climits>
+#include <bitset>
+#include <iomanip>
+#include <random>
+#include <ctime>
+using namespace std;
+
+typedef long long ll;
+
+const ll MOD = 1e9 + 7;
+const ll MAXN = 1e6 + 1;
+
+ll fact[MAXN];
+void precompute()
+{
+   fact[0] = 1;
+   for (ll i = 1; i < MAXN; i++) {
+       fact[i] = (i * fact[i - 1]) % MOD;
+   }
+}
+
+ll powmod(ll a, ll b){
+    a %= MOD;
+    if (a == 0) return 0;
+    ll product = 1;
+    while(b > 0){
+        if (b&1){    // you can also use b % 2 == 1
+            product *= a;
+            product %= MOD;
+            --b;
+        }
+        a *= a;
+        a %= MOD;
+        b /= 2;    // you can also use b >> 1
+    }
+    return product;
+}
+
+ll max(ll a, ll b) {
+    if (a > b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+
+ll min(ll a, ll b) {
+    if (a < b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+
+
+//calculates the inverse of a number mod MOD
+ll inv(ll a) {
+    return powmod(a, MOD - 2);
+}
+
+//Observation: Let's assume that we somehow find an array a for our initial permutation 1, 2, ... n
+//Let's draw a directed edge from i -> a_i for all i. Note how this splits up the graph into groups of closed cycles of lengths b_1, b_2, ... b_num where num is the number of cycles. Also note how b_1 + b_2 + . . . + b_num = n. And finally note that the #of steps that the cows must take is the lcm(b_1, b_2, . . ., b_num). So now the problem boils down to finding the sum of all values such that each value can be expressed as the lcm of a list of numbers who sum to n.
+//Observation2: Let's say that some value k works. Then look at its prime factorization: p_1^e_1 * p_2^e_2 * . . . * p_num^e_num where num is the number of primes. We realize that it's optimal for one cycle to have a length of p_1^e_1, one to have a length of p_2^e_2, . . . and one to have a length of p_num^e_num. If we have any extra space, we can pair the remaining cows with themselves to form a bunch of extra cycles of 1 who would have no effect on the lcm.
+//Algorithm: Now we've realized that the primes are important, so we'll run a knapsack dp based on that. We'll describe it in the code.
+//Note: By power, I'll mean the value of p_a^e_a for some prime p_a and some exponent e_a
+void solve(ll ca) {
+    //Read in the input
+    ll n, M;
+    cin >> n >> M;
+    
+    //Use the Sieve to check for each number 1 <= i <= n if it's prime
+    bool isPrime[n+1];
+    for (ll i = 0; i <= n; i++) {
+        isPrime[i] = true;
+    }
+    isPrime[0] = false;
+    isPrime[1] = false;
+    
+    for (ll i = 2; i <= n; i++) {
+        if (!isPrime[i]) {
+            continue;
+        }
+        
+        for (ll j = 2*i; j <= n; j+=i) {
+            isPrime[j] = false;
+        }
+    }
+
+    //Get a list of the primes
+    vector<ll> primes;
+    for (ll i = 1; i <= n; i++) {
+        if (isPrime[i]) {
+            primes.push_back(i);
+        }
+    }
+    
+    //Let dp[i] be the sum of all the valid values of k such that the sum of p_1^e_1 + p_2^e_2 + . . . + p_num^e_num for each value of k is i. dp2[i] is false if no values of k that satisfy the previous condition exist, and true otherwise
+    ll dp[n+1]; bool dp2[n+1];
+    for (ll i = 0; i <= n; i++) {
+        dp[i] = 0;
+        dp2[i] = false;
+    }
+    
+    //Base Case
+    dp[0] = 1;
+    dp2[0] = true;
+    
+    //Iterate over the primes first since we want to make sure each value of k only has at most one power of a certain prime in its prime factorization
+    for (ll j = 0; j < primes.size(); j++) {
+        //Iterate from the right to the left to make sure that each valid value of k is only getting at most one power of the current prime in its prime factorization
+        for (ll i = n; i >= 0; i--) {
+            //If the current sum has some values of k, then we can use this state
+            if (dp2[i]) {
+                //We will iterate over all the possible powers of the current prime and use them. This ensures that each value of k gets at most one power (exponent doesn't matter) of the current prime
+                ll cur = primes[j];
+                while (i+cur <= n) {
+                    //We need to add dp[i] multiplied by the current power of the current prime to represent the fact that we're taking all the values of k with a sum of i and multiplying them by a power of the current power of the current prime.
+                    dp[i+cur] = (dp[i+cur]%M + (dp[i]%M)*(cur%M))%M;
+                    dp2[i+cur] = true;
+                    
+                    //Update the power
+                    cur *= primes[j];
+                }
+            }
+        }
+    }
+    
+    //The answer is the sum of all valid k over all their possible sums of their exponent powers.
+    ll ans = 0;
+    for (ll i = 0; i <= n; i++) {
+        ans = (ans%M + dp[i]%M)%M;
+    }
+    
+    cout << ans << endl;
+}
+
+int main() {
+    mt19937 rng(0);
+    // Fast IO
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    freopen("exercise.in", "r", stdin);
+    freopen("exercise.out", "w", stdout);
+    
+    ll t = 1;
+    ll co = 0;
+    while (t--) {
+        solve(co);
+        co++;
+    }
+}

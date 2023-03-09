@@ -1,0 +1,104 @@
+CSES Problem Set
+Edit Distance
+Dynamic Programming
+
+Code:
+#include <iostream>
+#include <fstream>
+#include <algorithm>
+#include <vector>
+#include <stack>
+#include <queue>
+#include <math.h>
+#include <set>
+#include <map>
+#include <string>
+#include <tuple>
+#include <numeric>
+#include <climits>
+#include <bitset>
+#include <iomanip>
+#include <random>
+#include <ctime>
+using namespace std;
+
+typedef long long ll;
+
+const ll MOD = 1e9 + 7;
+const ll MAXN = 1e6 + 1;
+const ll INF = 10000;
+
+
+ll max(ll a, ll b) {
+    if (a > b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+
+ll min(ll a, ll b) {
+    if (a < b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+
+void solve(ll ca) {
+    string s1, s2;
+    cin >> s1 >> s2;
+    ll n = s1.length(); ll m = s2.length();
+    
+    ll dp[n+1][m+1]; //dp[i][j] is the minimum cost to convert the first i characters of string n into the first j characters of string m
+    
+    //Note it's important that we include states where i and or j are 0 as well
+    for (ll i = 0; i <= n; i++) {
+        for (ll j = 0; j <= m; j++) {
+            if (i == 0 && j == 0) {
+                dp[i][j] = 0; //Base Case
+            } else {
+                dp[i][j] = INF;
+            }
+            
+            //We can remove the ith character in the first string and match the remaining i-1 characters in the first string with the j characters in the second string
+            if (i > 0) {
+                dp[i][j] = min(dp[i][j], dp[i-1][j]+1);
+            }
+            //We can have the first i characters match with the first j-1 characters in the second string and then add an extra character at the end of the first string
+            if (j > 0) {
+                dp[i][j] = min(dp[i][j], dp[i][j-1]+1);
+            }
+            
+            //replace character i if needed
+            if (i > 0 && j > 0) {
+                if (s1[i-1] == s2[j-1]) {
+                    dp[i][j] = min(dp[i][j], dp[i-1][j-1]);
+                } else {
+                    dp[i][j] = min(dp[i][j], dp[i-1][j-1]+1);
+                }
+            }
+        }
+    }
+    
+    cout << dp[n][m] << endl;
+}
+
+int main() {
+    mt19937 rng(0);
+    // Fast IO
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    /*
+    freopen("exercise.in", "r", stdin);
+    freopen("exercise.out", "w", stdout);
+*/
+    ll t = 1;
+    //cin >> t;
+    
+    ll co = 0;
+    while (t--) {
+        solve(co);
+        co++;
+    }
+}

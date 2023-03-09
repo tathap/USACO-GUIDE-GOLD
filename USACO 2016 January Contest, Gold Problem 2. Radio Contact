@@ -1,0 +1,144 @@
+USACO 2016 January Contest, Gold
+Problem 2. Radio Contact
+
+Code:
+#include <iostream>
+#include <fstream>
+#include <algorithm>
+#include <vector>
+#include <stack>
+#include <queue>
+#include <math.h>
+#include <set>
+#include <map>
+#include <string>
+#include <tuple>
+#include <numeric>
+#include <climits>
+#include <bitset>
+#include <iomanip>
+#include <random>
+#include <ctime>
+using namespace std;
+
+typedef long long ll;
+
+const ll MOD = 1e9 + 7;
+const ll MAXN = 1005;
+const ll INF = 1e14;
+
+
+ll max(ll a, ll b) {
+    if (a > b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+
+ll min(ll a, ll b) {
+    if (a < b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+
+//Computes squared coordinate distance
+ll compute(ll r1, ll c1, ll r2, ll c2) {
+    ll xdist = (r1-r2)*(r1-r2);
+    ll ydist = (c1-c2)*(c1-c2);
+    return (xdist+ydist);
+}
+
+//Observation: It's always optimal for at least one of fj or bessie to move in each time unit. If both wait, then they make no progress on finishing the course while still losing energy.
+void solve(ll ca) {
+    ll n, m;
+    cin >> n >> m;
+    
+    //Read in the input while also precomputing farmer john and bessie's initial positions and their positions after each possible prefix of moves
+    pair<ll, ll> fjPos[n+1];
+    cin >> fjPos[0].first >> fjPos[0].second;
+    
+    pair<ll, ll> bPos[m+1];
+    cin >> bPos[0].first >> bPos[0].second;
+    
+    string fj, be;
+    cin >> fj >> be;
+    for (ll i = 0; i < n; i++) {
+        fjPos[i+1] = fjPos[i];
+        if (fj[i] == 'N') {
+            fjPos[i+1].second++;
+        } else if (fj[i] == 'S') {
+            fjPos[i+1].second--;
+        } else if (fj[i] == 'E') {
+            fjPos[i+1].first++;
+        } else {
+            fjPos[i+1].first--;
+        }
+    }
+    
+    for (ll i = 0; i < m; i++) {
+        bPos[i+1] = bPos[i];
+        if (be[i] == 'N') {
+            bPos[i+1].second++;
+        } else if (be[i] == 'S') {
+            bPos[i+1].second--;
+        } else if (be[i] == 'E') {
+            bPos[i+1].first++;
+        } else {
+            bPos[i+1].first--;
+        }
+    }
+    
+    ll dp[n+1][m+1]; //dp[i][j] is the minimum total distance using the first i steps of farmer john and the first j steps of bessie
+    
+    for (ll i = 0; i <= n; i++) {
+        for (ll j = 0; j <= m; j++) {
+            //Base Case
+            if (i == 0 && j == 0) {
+                dp[0][0] = 0;
+                continue;
+            }
+            
+            dp[i][j] = INF;
+                        
+            //We will only make Farmer John make a move
+            if (i > 0 && dp[i-1][j] != INF) {
+                dp[i][j] = min(dp[i][j], dp[i-1][j] + compute(fjPos[i].first, fjPos[i].second, bPos[j].first, bPos[j].second));
+            }
+            
+            //We will only make Bessie make a move
+            if (j > 0 && dp[i][j-1] != INF) {
+                dp[i][j] = min(dp[i][j], dp[i][j-1] + compute(fjPos[i].first, fjPos[i].second, bPos[j].first, bPos[j].second));
+            }
+            
+            //We will make Farmer John and Bessie both simultaneously make a move
+            if (i > 0 && j > 0 && dp[i-1][j-1] != INF) {
+                dp[i][j] = min(dp[i][j], dp[i-1][j-1] + compute(fjPos[i].first, fjPos[i].second, bPos[j].first, bPos[j].second));
+            }
+        }
+    }
+    
+    //Print the answer
+    cout << dp[n][m] << endl;
+}
+
+int main() {
+    mt19937 rng(0);
+    // Fast IO
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    freopen("radio.in", "r", stdin);
+    freopen("radio.out", "w", stdout);
+
+    ll t = 1;
+    //cin >> t;
+    
+    ll co = 0;
+    while (t--) {
+        solve(co);
+        co++;
+    }
+}

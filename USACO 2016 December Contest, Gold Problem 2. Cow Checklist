@@ -1,0 +1,162 @@
+USACO 2016 December Contest, Gold
+Problem 2. Cow Checklist
+
+Code:
+#include <iostream>
+#include <fstream>
+#include <algorithm>
+#include <vector>
+#include <stack>
+#include <queue>
+#include <math.h>
+#include <set>
+#include <map>
+#include <string>
+#include <tuple>
+#include <numeric>
+#include <climits>
+#include <bitset>
+#include <iomanip>
+#include <random>
+#include <ctime>
+using namespace std;
+
+typedef long long ll;
+
+const ll MOD = 1e9 + 7;
+const ll MAXN = 1005;
+const ll INF = 1e14;
+
+
+ll max(ll a, ll b) {
+    if (a > b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+
+ll min(ll a, ll b) {
+    if (a < b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+
+//Computes the squared distance between 2 coordinate points
+ll compute(ll r1, ll c1, ll r2, ll c2) {
+    ll xdist = (r1-r2)*(r1-r2);
+    ll ydist = (c1-c2)*(c1-c2);
+    return (xdist+ydist);
+}
+
+//dp[i][j][0] is the minimum cost to visit the first h holsteins in order and the first g guernseys in order assuming we already have visted the first i holsteins in order and the first j guernseys in order and are currently at a holstein. dp[i][j][1] is the same but we start at a guernsey.
+ll dp[MAXN][MAXN][2];
+bool dp2[MAXN][MAXN][2]; //dp2[i][j][k] is true if the state has already been computed and false otherwise
+
+//Input
+ll h, g;
+pair<ll, ll> hol[MAXN], gu[MAXN];
+
+//Compute the current state based on the current number of holsteins visited, the current number of guernseys visted, and which one we're currently at
+ll dfs(ll r, ll c, ll e) {
+    ll ret = INF;
+    
+    //If we've already visited all the cows and are at a holstein, we've satisfied all constraints and the total cost is 0 since we've already finished. Otherwise if we've already visited all the cows and are at a guernsey, we can't use this solution so we'll give it a super large value to make sure we never go here.
+    if (r == h && c == g) {
+        if (e == 0) {
+            dp[r][c][0] = 0;
+            return dp[r][c][0];
+        } else {
+            dp[r][c][1] = INF;
+            return dp[r][c][1];
+        }
+    }
+    
+    //If this state has already been visited, use the answer we found
+    if (dp2[r][c][e]) {
+        return dp[r][c][e];
+    }
+    
+    //Mark the state as visited
+    dp2[r][c][e] = true;
+    
+    //add a holstein
+    if (r < h) {
+        //Coordinate cost to move from the current holstein/guernesey depending on which one we're currently at to the next holstein
+        ll cost;
+        if (e == 0) {
+            cost = compute(hol[r-1].first, hol[r-1].second, hol[r].first, hol[r].second);
+        } else {
+            cost = compute(gu[c-1].first, gu[c-1].second, hol[r].first, hol[r].second);
+        }
+        
+        //Choose the smallest cost
+        ret = min(ret, cost + dfs(r+1, c, 0));
+    }
+    
+    //add a guernsey
+    if (c < g) {
+        //Coordinate cost to move from the current holstein/guernesey depending on which one we're currently at to the next guernsey
+        ll cost;
+        if (e == 0) {
+            cost = compute(hol[r-1].first, hol[r-1].second, gu[c].first, gu[c].second);
+        } else {
+            cost = compute(gu[c-1].first, gu[c-1].second, gu[c].first, gu[c].second);
+        }
+        
+        //Choose the smallest cost
+        ret = min(ret, cost + dfs(r, c+1, 1));
+    }
+    
+    //Update the current dp state
+    dp[r][c][e] = ret;
+    return dp[r][c][e];
+}
+
+void solve(ll ca) {
+    //Read in the input
+    cin >> h >> g;
+    
+    for (ll i = 0; i < h; i++) {
+        cin >> hol[i].first >> hol[i].second;
+    }
+    for (ll i = 0; i < g; i++) {
+        cin >> gu[i].first >> gu[i].second;
+    }
+        
+    for (ll i = 0; i <= h; i++) {
+        for (ll j = 0; j <= g; j++) {
+            dp[i][j][0] = INF;
+            dp[i][j][1] = INF;
+            dp2[i][j][0] = false;
+            dp2[i][j][1] = false;
+        }
+    }
+    
+    //Run our dfs starting from the first holstein
+    dfs(1, 0, 0);
+    
+    //Print the answer
+    cout << dp[1][0][0] << endl;
+}
+
+int main() {
+    mt19937 rng(0);
+    // Fast IO
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    freopen("checklist.in", "r", stdin);
+    freopen("checklist.out", "w", stdout);
+
+    ll t = 1;
+    //cin >> t;
+    
+    ll co = 0;
+    while (t--) {
+        solve(co);
+        co++;
+    }
+}

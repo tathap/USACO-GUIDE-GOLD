@@ -1,0 +1,12 @@
+https://community.topcoder.com/stat?c=problem_statement&pm=16969
+SubmultiplesOfN
+
+There wasn't a place to submit so here's the algorithm below. Let's say we just wanted to count the #of distinct subsequences in the input number.
+Let dp[i] be the #of distinct subsequences using the first i digits. We can take all the distinct subsequences using the first i-1 digits and multiply that by 2
+to simulate adding the current digit a[i] to each of the unique subsequences. However this may overcount. To solve this, we'll store the rightmost position of
+each character as we traverse from right to left. dp[i] = 2*dp[i-1] - dp[last[a[i]]-1]. This prevents overcounting. Think about this.
+
+To modify this algorithm for the problem. We'll let dp[i][j] be the number of distinct numbers using the first i subsequences that are congruent to j modulo n
+Transitions: dp[i][j] = summation(2*dp[i-1][k] - dp[last[a[i]]-1][k]) over all k such that 10*k + a[i] is congruent to j modulo n. This simulates the process of 
+adding a new digit and how it changes the modulo residue of an already existing number. We can optimize this very easily by storing some prefix sums so that we can compute
+transitions in O(1)

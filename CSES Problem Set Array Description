@@ -1,0 +1,154 @@
+CSES Problem Set
+Array Description
+Dynamic Programming
+
+Code:
+#include <iostream>
+#include <fstream>
+#include <algorithm>
+#include <vector>
+#include <stack>
+#include <queue>
+#include <math.h>
+#include <set>
+#include <map>
+#include <string>
+#include <tuple>
+#include <numeric>
+#include <climits>
+#include <bitset>
+#include <iomanip>
+#include <random>
+#include <ctime>
+using namespace std;
+
+typedef long long ll;
+
+const ll MOD = 1e9 + 7;
+const ll MAXN = 1e6 + 1;
+
+ll fact[MAXN];
+void precompute()
+{
+   fact[0] = 1;
+   for (ll i = 1; i < MAXN; i++) {
+       fact[i] = (i * fact[i - 1]) % MOD;
+   }
+}
+
+ll powmod(ll a, ll b){
+    a %= MOD;
+    if (a == 0) return 0;
+    ll product = 1;
+    while(b > 0){
+        if (b&1){    // you can also use b % 2 == 1
+            product *= a;
+            product %= MOD;
+            --b;
+        }
+        a *= a;
+        a %= MOD;
+        b /= 2;    // you can also use b >> 1
+    }
+    return product;
+}
+
+ll max(ll a, ll b) {
+    if (a > b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+
+ll min(ll a, ll b) {
+    if (a < b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+
+
+//calculates the inverse of a number mod MOD
+ll inv(ll a) {
+    return powmod(a, MOD - 2);
+}
+
+void solve(ll ca) {
+    ll n, m;
+    cin >> n >> m;
+    
+    ll x[n];
+    for (ll i = 0; i < n; i++) {
+        cin >> x[i];
+    }
+    
+    //dp[i][j] is the #of ways of arrays for the first i positions that ends in a value of j
+    ll dp[n+1][m+1];
+    
+    //Initialize everything to 0
+    for (ll i = 0; i <= n; i++) {
+        for (ll j = 0; j <= m; j++) {
+            dp[i][j] = 0;
+        }
+    }
+    
+    //If the first value is 0, then that means we can turn it into anything
+    if (x[0] == 0) {
+        for (ll j = 1; j <= m; j++) {
+            dp[1][j] = 1;
+        }
+    } else { //Otherwise, there's only one choice for what the first character can be
+        dp[1][x[0]] = 1;
+    }
+    
+    for (ll i = 2; i <= n; i++) {
+        //If the current character isn't a 0, then we know that the current character has to be x[i]. We need to choose all valid previous values that keep the absolute difference <= 1 and add all of them
+        if (x[i-1] != 0) {
+            ll prev[3] = {x[i-1]-1, x[i-1], x[i-1]+1};
+            for (ll j = 0; j < 3; j++) {
+                if (prev[j] >= 1 && prev[j] <= m) {
+                    dp[i][x[i-1]] = (dp[i][x[i-1]]%MOD + dp[i-1][prev[j]]%MOD)%MOD;
+                }
+            }
+        } else {
+            //Since the current character is a 0, we can iterate over all m values and for each value, repeat the above process
+            for (ll j = 1; j <= m; j++) {
+                ll prev[3] = {j-1, j, j+1};
+                for (ll k = 0; k < 3; k++) {
+                    if (prev[k] >= 1 && prev[k] <= m) {
+                        dp[i][j] = (dp[i][j]%MOD + dp[i-1][prev[k]]%MOD)%MOD;
+                    }
+                }
+            }
+        }
+    }
+    
+    //Print the #of ways to have n elements
+    ll ans = 0;
+    for (ll j = 1; j <= m; j++) {
+        ans = (ans%MOD + dp[n][j]%MOD)%MOD;
+    }
+    
+    cout << ans << endl;
+}
+
+int main() {
+    mt19937 rng(0);
+    // Fast IO
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    /*
+    freopen("exercise.in", "r", stdin);
+    freopen("exercise.out", "w", stdout);
+*/
+    ll t = 1;
+    //cin >> t;
+    
+    ll co = 0;
+    while (t--) {
+        solve(co);
+        co++;
+    }
+}

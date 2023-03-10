@@ -1,0 +1,116 @@
+Hamiltonian Flights
+Graph Algorithms:
+
+Code:
+#include <iostream>
+#include <fstream>
+#include <algorithm>
+#include <vector>
+#include <stack>
+#include <queue>
+#include <math.h>
+#include <set>
+#include <map>
+#include <string>
+#include <tuple>
+#include <numeric>
+#include <climits>
+#include <bitset>
+#include <iomanip>
+#include <random>
+#include <ctime>
+using namespace std;
+
+typedef long long ll;
+
+ll max(ll a, ll b) {
+    if (a > b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+
+ll min(ll a, ll b) {
+    if (a < b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+
+const ll MAXN = 22;
+const ll MAXM = 2097153;
+const ll MOD = 1e9 + 7;
+
+//Run a bitmask dp
+ll n, m;
+ll dp[MAXN][MAXM]; //dp[i][j] is the #of ways to reach our end state assuming we start at city i and the cities we've visited is stored in j as a bitmask
+vector<ll> adj[MAXN]; //Stores the edges. Note that since multiple copies of the same edge can be counted, we can't use a normal adjacency matrix
+
+ll dfs(ll node, ll bitmask) {
+    //Memoization
+    if (dp[node][bitmask] != 0) {
+        return dp[node][bitmask];
+    }
+    
+    //If we're at the final node and we've visited every node, return 1. Otherwise if we're at the final node and a couple of nodes are still left, this isn't a valid solution path and we must return 0
+    if (node == n-1) {
+        if (bitmask == (1<<n)-1) {
+            dp[node][bitmask] = 1;
+            return dp[node][bitmask];
+        } else {
+            return 0;
+        }
+    }
+        
+    //Only go to cities that you haven't visited and update our dp value
+    ll ret = 0;
+    for (auto el: adj[node]) {
+        if (bitmask & (1 << el)) {
+            //
+        } else {
+            ret = (ret%MOD + dfs(el, (bitmask|(1<<el)))%MOD)%MOD;
+        }
+    }
+    
+    dp[node][bitmask] = ret;
+    return dp[node][bitmask];
+}
+
+void solve(ll ca) {
+    //Read in the input
+    cin >> n >> m;
+    for (ll i = 0; i < m; i++) {
+        ll a, b;
+        cin >> a >> b;
+        a--; b--;
+        
+        adj[a].push_back(b);
+    }
+    
+    //Run a recursive dp with memoization
+    dfs(0, 1);
+    
+    //Print the answer starting from the first city having only visited it
+    cout << dp[0][1] << endl;
+}
+
+int main() {
+    mt19937 rng(0);
+    // Fast IO
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+  /*
+    freopen("nocross.in", "r", stdin);
+    freopen("nocross.out", "w", stdout);
+*/
+    ll t = 1;
+    //cin >> t;
+    
+    ll co = 0;
+    while (t--) {
+        solve(co);
+        co++;
+    }
+}

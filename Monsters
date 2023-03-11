@@ -1,0 +1,213 @@
+Monsters
+Graph Algorithms
+
+Code:
+#include <iostream>
+#include <fstream>
+#include <algorithm>
+#include <vector>
+#include <stack>
+#include <queue>
+#include <math.h>
+#include <set>
+#include <map>
+#include <string>
+#include <tuple>
+#include <numeric>
+#include <climits>
+#include <bitset>
+#include <iomanip>
+#include <random>
+#include <ctime>
+using namespace std;
+
+typedef int ll;
+
+ll max(ll a, ll b) {
+    if (a > b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+
+ll min(ll a, ll b) {
+    if (a < b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+
+const ll MAXN = 1e5 + 1;
+const ll MAXM = 2097153;
+const ll MOD = 1e9 + 7;
+const ll INF = 1e7;
+
+//Algorithm: Let's first compute the distance from the starting cell to all other cells.
+//Then we'll run a mutli-source bfs from all the monsters to all other cells.
+//Finally for each border cell that doesn't have a wall or a monster, we'll check if the distance from the start cell to that border cell is less than the distance from the closest monster to that border cell. If so, then we can start from the starting cell and travel to that border cell without interference of monsters. Then all we need to do is rebuild the path to that border cell
+
+void solve(ll ca) {
+    ll n, m;
+    cin >> n >> m;
+    
+    char grid[n][m];
+    pair<ll, ll> startc; //starting coordinates
+    for (ll i = 0; i < n; i++) {
+        for (ll j = 0; j < m; j++) {
+            cin >> grid[i][j];
+            if (grid[i][j] == 'A') {
+                startc = {i, j};
+            }
+        }
+    }
+    
+    //directions
+    char dir[4] = {'D', 'R', 'U', 'L'};
+    ll dr[4] = {1, 0, -1, 0};
+    ll dc[4] = {0, 1, 0, -1};
+
+    //par[i][j].first is the direction that the previous cell went to reach node (i, j) on the shortest path from the starting cell to node (i, j). par[i][j].second is the shortest distance to node (i, j) from the starting cell
+    pair<ll, ll> par[n][m];
+    for (ll i = 0; i < n; i++) {
+        for (ll j = 0; j < m; j++) {
+            par[i][j] = {-1, INF};
+        }
+    }
+    
+    //Compute all distances from the starting cell
+    queue<pair<ll, ll>> q;
+    queue<ll> cost;
+    
+    q.push(startc);
+    cost.push(0);
+    while (!q.empty()) {
+        pair<ll, ll> cur = q.front();
+        ll ccost = cost.front();
+        q.pop(); cost.pop();
+        
+        if (par[cur.first][cur.second].second != INF) {
+            continue;
+        }
+        
+        par[cur.first][cur.second].second = ccost;
+        
+        for (ll k = 0; k < 4; k++) {
+            ll nr = cur.first + dr[k];
+            ll nc = cur.second + dc[k];
+            
+            if (nr >= 0 && nr < n && nc >= 0 && nc < m && grid[nr][nc] != '#' && par[nr][nc].first == -1) {
+                par[nr][nc].first = k;
+                q.push({nr, nc});
+                cost.push(ccost+1);
+            }
+        }
+    }
+    
+    //Run mutli-source BFS from the monsters
+    ll dist[n][m];
+    for (ll i = 0; i < n; i++) {
+        for (ll j = 0; j < m; j++) {
+            dist[i][j] = INF;
+        }
+    }
+    
+    for (ll i = 0; i < n; i++) {
+        for (ll j = 0; j < m; j++) {
+            if (grid[i][j] == 'M') {
+                q.push({i, j});
+                cost.push(0);
+            }
+        }
+    }
+    
+    while (!q.empty()) {
+        pair<ll, ll> cur = q.front();
+        ll ccost = cost.front();
+        q.pop(); cost.pop();
+        
+        if (dist[cur.first][cur.second] != INF) {
+            continue;
+        }
+        
+        dist[cur.first][cur.second] = ccost;
+        
+        for (ll k = 0; k < 4; k++) {
+            ll nr = cur.first + dr[k];
+            ll nc = cur.second + dc[k];
+            
+            if (nr >= 0 && nr < n && nc >= 0 && nc < m && grid[nr][nc] != '#' && dist[nr][nc] == INF) {
+                q.push({nr, nc});
+                cost.push(ccost+1);
+            }
+        }
+    }
+    
+    //Store all border cells that don't have a wall or monster
+    vector<pair<ll, ll>> list;
+    for (ll i = 0; i < n; i++) {
+        for (ll j = 0; j < m; j++) {
+            if (grid[i][j] == '#' || grid[i][j] == 'M') {
+                continue;
+            }
+            
+            if (i == 0 || i == n-1 || j == 0 || j == m-1) {
+                list.push_back({i, j});
+            }
+        }
+    }
+    
+    //Check if a border cell works and rebuild a path if so
+    for (auto el: list) {
+        ll i = el.first; ll j = el.second;
+        
+        ll dist1 = par[i][j].second;
+        ll dist2 = dist[i][j];
+        
+        if (dist1 < dist2) {
+            cout << "YES" << endl;
+            
+            vector<char> directions;
+            pair<ll, ll> cur = {i, j};
+            while (cur != startc) {
+                directions.push_back(dir[par[cur.first][cur.second].first]);
+                pair<ll, ll> newcur;
+                newcur.first = cur.first - dr[par[cur.first][cur.second].first];
+                newcur.second = cur.second - dc[par[cur.first][cur.second].first];
+                cur = newcur;
+            }
+            
+            reverse(directions.begin(), directions.end());
+            cout << directions.size() << endl;
+            for (auto el: directions) {
+                cout << el;
+            }
+            cout << endl;
+            
+            return;
+        }
+    }
+    
+    //Print No if we couldn't find any valid path
+    cout << "NO" << endl;
+}
+
+int main() {
+    mt19937 rng(0);
+    // Fast IO
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+  /*
+    freopen("piggyback.in", "r", stdin);
+    freopen("piggyback.out", "w", stdout);
+*/
+    ll t = 1;
+    //cin >> t;
+    
+    ll co = 0;
+    while (t--) {
+        solve(co);
+        co++;
+    }
+}

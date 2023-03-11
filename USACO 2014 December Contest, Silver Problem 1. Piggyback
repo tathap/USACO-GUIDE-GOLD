@@ -1,0 +1,125 @@
+USACO 2014 December Contest, Silver
+Problem 1. Piggyback
+
+Code:
+#include <iostream>
+#include <fstream>
+#include <algorithm>
+#include <vector>
+#include <stack>
+#include <queue>
+#include <math.h>
+#include <set>
+#include <map>
+#include <string>
+#include <tuple>
+#include <numeric>
+#include <climits>
+#include <bitset>
+#include <iomanip>
+#include <random>
+#include <ctime>
+using namespace std;
+
+typedef long long ll;
+
+ll max(ll a, ll b) {
+    if (a > b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+
+ll min(ll a, ll b) {
+    if (a < b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+
+const ll MAXN = 1e5 + 1;
+const ll MAXM = 2097153;
+const ll MOD = 1e9 + 7;
+const ll INF = 1e7;
+
+ll n, m;
+ll dist[3][MAXN]; //dist[0][i] is the minimum distance to node i from node 0 (bessie), dist[1][i] is the minimum distance to node i from node 1 (elsie), and dist[2][i] is the minimum distance to node i from node n-1 (the barn). Note that these distances are assuming that the weight of each edge is 1.
+vector<ll> adj[MAXN]; //Store the graph
+
+//Runs a bfs
+void bfs(ll node, ll index) {
+    for (ll i = 0; i < n; i++) {
+        dist[index][i] = INF;
+    }
+    queue<pair<ll, ll>> q;
+    q.push({node, 0});
+    
+    while (!q.empty()) {
+        pair<ll, ll> cur = q.front();
+        q.pop();
+        
+        if (dist[index][cur.first] != INF) {
+            continue;
+        }
+                        
+        dist[index][cur.first] = cur.second;
+        
+        for (auto el: adj[cur.first]) {
+            if (dist[index][el] == INF) {
+                q.push({el, cur.second+1});
+            }
+        }
+    }
+}
+
+//Algorithm: Either Bessie and Elsie both go alone, or they meet up at a common point at meet together. We'll first run 3 BFS's to comptute the shortest distance from bessie, elsie, and the barn to every other node. Then we'll check each possibility
+
+void solve(ll ca) {
+    ll b, e, p;
+    cin >> b >> e >> p >> n >> m;
+    
+    for (ll i = 0; i < m; i++) {
+        ll x, y;
+        cin >> x >> y;
+        x--; y--;
+        adj[x].push_back(y);
+        adj[y].push_back(x);
+    }
+        
+    bfs(0, 0);
+    bfs(1, 1);
+    bfs(n-1, 2);
+
+    //Force Bessie and Elsie to go independently each
+    ll ans = b*dist[0][n-1] + e*dist[1][n-1];
+    
+    //Iterate over a meeting point, and compute the cost for Bessie and Elsie to arrive there individually and then to go together to the barn as a group
+    for (ll meet = 0; meet < n; meet++) {
+        ll tans = b*dist[0][meet] + e*dist[1][meet] + p*dist[2][meet];
+        ans = min(ans, tans);
+    }
+    
+    //Print the answer
+    cout << ans << endl;
+}
+
+int main() {
+    mt19937 rng(0);
+    // Fast IO
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+  
+    freopen("piggyback.in", "r", stdin);
+    freopen("piggyback.out", "w", stdout);
+
+    ll t = 1;
+    //cin >> t;
+    
+    ll co = 0;
+    while (t--) {
+        solve(co);
+        co++;
+    }
+}

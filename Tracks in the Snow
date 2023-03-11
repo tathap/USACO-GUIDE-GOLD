@@ -1,0 +1,129 @@
+Tracks in the Snow
+TRACKS IN THE SNOW (BOI13_TRACKS)
+
+Code:
+#include <iostream>
+#include <fstream>
+#include <algorithm>
+#include <vector>
+#include <stack>
+#include <queue>
+#include <math.h>
+#include <set>
+#include <map>
+#include <string>
+#include <tuple>
+#include <numeric>
+#include <climits>
+#include <bitset>
+#include <iomanip>
+#include <random>
+#include <ctime>
+using namespace std;
+
+typedef int ll;
+
+ll max(ll a, ll b) {
+    if (a > b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+
+ll min(ll a, ll b) {
+    if (a < b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+
+const ll MAXN = 4001;
+const ll MAXM = 2097153;
+const ll MOD = 1e9 + 7;
+const ll INF = 1e7;
+
+ll dr[4] = {0, 1, 0, -1};
+ll dc[4] = {1, 0, -1, 0};
+
+//Observation: Let's look at all the connected components of cells that are all either last crossed by foxes or last crossed by rabbits. Note that the type of animal that last stepped on the top left cell  would have been the last animal to visit. In addition note that in order to minimize the #of total animals, this first animal would vist all the cells in its connected component.
+//Observation2: Once we discount this animal, now look at all the connected components of cells it was adjacent to. All these connected components are all the opposite type of animal from the first component that we removed. For example if the last animal was a rabbit and we removed the rabbit component containing the top left square, all the remaining components that had touched it will all be fox components. Note that these fox components can all be handled since there is now space for them to connect. So 1 fox could have travelled on all their squares right before the final rabbit began its stroll. So now we can remove all the components that connected to the last component as they can all be counted by an animal. Now following similar logic, the components who had connected to the just removed connected components can be served by 1 animal.
+//Algorithm: So if we create a graph where the nodes are the connected components of the original graph and 2 nodes have an edge if some cells in their components are adjacent, then the answer is the largest minimum distance from the component with the top left cell to any other component. This can be done in BFS.
+//Better Solution: We don't even have to create a graph by using 0-1 BFS. The idea is that we'll start a 0-1 BFS from the top left corner and print the largest minimum distance we find to any other cell. If we're at a cell and move to a cell traversed by the same animal, the cost is 0. Otherwise if both cells were traversed by one animal, the cost is 1 since we're technically moving through components. This gives us a nice efficient solution
+
+void solve(ll ca) {
+    ll h, w;
+    cin >> h >> w;
+    
+    char grid[h][w];
+    for (ll i = 0; i < h; i++) {
+        for (ll j = 0; j < w; j++) {
+            cin >> grid[i][j];
+        }
+    }
+    
+    ll cheapest[h][w];
+    for (ll i = 0; i < h; i++) {
+        for (ll j = 0; j < w; j++) {
+            cheapest[i][j] = INF;
+        }
+    }
+    
+    deque<pair<ll, ll>> dq1;
+    deque<ll> dq2;
+    
+    dq1.push_back({0, 0});
+    dq2.push_back(0);
+    
+    ll ans = 0;
+    while (!dq1.empty()) {
+        pair<ll, ll> cur = dq1.front();
+        ll cos = dq2.front();
+        dq1.pop_front();
+        dq2.pop_front();
+        
+        if (cheapest[cur.first][cur.second] != INF) {
+            continue;
+        }
+        
+        ans = max(ans, cos);
+        cheapest[cur.first][cur.second] = cos;
+        for (ll k = 0; k < 4; k++) {
+            ll nr = cur.first + dr[k];
+            ll nc = cur.second + dc[k];
+            
+            if (nr >= 0 && nr < h && nc >= 0 && nc < w && cheapest[nr][nc] == INF && grid[nr][nc] != '.') {
+                if (grid[nr][nc] == grid[cur.first][cur.second]) {
+                    dq1.push_front({nr, nc});
+                    dq2.push_front(cos);
+                } else {
+                    dq1.push_back({nr, nc});
+                    dq2.push_back(cos+1);
+                }
+            }
+        }
+    }
+    
+    //Print ans+1 since we have to account for the animal who will handle the original component that we started our 0-1 BFS on
+    cout << ans+1 << endl;
+}
+
+int main() {
+    mt19937 rng(0);
+    // Fast IO
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+  /*
+    freopen("piggyback.in", "r", stdin);
+    freopen("piggyback.out", "w", stdout);
+*/
+    ll t = 1;
+    //cin >> t;
+    
+    ll co = 0;
+    while (t--) {
+        solve(co);
+        co++;
+    }
+}

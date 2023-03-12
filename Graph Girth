@@ -1,0 +1,140 @@
+Graph Girth
+Graph Algorithms:
+
+Code:
+#include <iostream>
+#include <fstream>
+#include <algorithm>
+#include <vector>
+#include <stack>
+#include <queue>
+#include <math.h>
+#include <set>
+#include <map>
+#include <string>
+#include <tuple>
+#include <numeric>
+#include <climits>
+#include <bitset>
+#include <iomanip>
+#include <random>
+#include <ctime>
+using namespace std;
+
+typedef int ll;
+
+ll max(ll a, ll b) {
+    if (a > b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+
+ll min(ll a, ll b) {
+    if (a < b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+
+const ll MAXN = 2501;
+const ll MAXM = 2097153;
+const ll MOD = 1e9 + 7;
+const ll INF = 1e7;
+
+ll n, m;
+vector<ll> adj[MAXN];
+
+//Stores the current node, its distance from the source node, and the parent it came from on
+//the BFS tree
+struct State{
+    ll node, dist, par;
+};
+
+//to check if a cycle exists from a fixed source node, run a BFS from this node. Maintain the current node, the minimum distance from the source node, and its parent on the BFS tree.
+//When we reach a node u and find an edge from node u to an already visited node v, then we could have a cycle going from the source node to u to v back to the source node in dist[u] + dist[v] + 1 length
+//The only catch is that node v might be the parent of node u, however our parent constraint allows us to ignore this case
+ll bfs(ll inp) {
+    ll ret = INF;
+    ll dist[n];
+    for (ll i = 0; i < n; i++) {
+        dist[i] = INF;
+    }
+    
+    //queue that maintains the specific constraints described
+    queue<State> q;
+    q.push({inp, 0, -1});
+    
+    //Run BFS
+    while (!q.empty()) {
+        State cur = q.front();
+        q.pop();
+        
+        if (dist[cur.node] != INF) {
+            continue;
+        }
+        
+        dist[cur.node] = cur.dist;
+        
+        for (auto el: adj[cur.node]) {
+            //Ignore a node that has already been traversed as the current node's parent
+            if (el == cur.par) {
+                continue;
+            }
+            
+            //Visit unvisited node
+            if (dist[el] == INF) {
+                q.push({el, cur.dist+1, cur.node});
+            } else { //Get best cycle
+                ret = min(ret, dist[el] + dist[cur.node] + 1);
+            }
+        }
+    }
+    
+    return ret;
+}
+
+//Algorithm: We'll find the shortest cycle containing each node, take the minimum of all them, and print the answer.
+//If no cycle is found, print -1
+void solve(ll ca) {
+    cin >> n >> m;
+    for (ll i = 0; i < m; i++) {
+        ll a, b;
+        cin >> a >> b;
+        a--; b--;
+        adj[a].push_back(b);
+        adj[b].push_back(a);
+    }
+    
+    ll ans = INF;
+    for (ll i = 0; i < n; i++) {
+        ans = min(ans, bfs(i));
+    }
+    
+    if (ans == INF) {
+        cout << -1 << endl;
+    } else {
+        cout << ans << endl;
+    }
+}
+
+int main() {
+    mt19937 rng(0);
+    // Fast IO
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+  /*
+    freopen("piggyback.in", "r", stdin);
+    freopen("piggyback.out", "w", stdout);
+*/
+    ll t = 1;
+    //cin >> t;
+    
+    ll co = 0;
+    while (t--) {
+        solve(co);
+        co++;
+    }
+}

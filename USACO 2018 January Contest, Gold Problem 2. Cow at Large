@@ -1,0 +1,211 @@
+USACO 2018 January Contest, Gold
+Problem 2. Cow at Large
+
+Code:
+#include <iostream>
+#include <fstream>
+#include <algorithm>
+#include <vector>
+#include <stack>
+#include <queue>
+#include <math.h>
+#include <set>
+#include <map>
+#include <string>
+#include <tuple>
+#include <numeric>
+#include <climits>
+#include <bitset>
+#include <iomanip>
+#include <random>
+#include <ctime>
+using namespace std;
+
+typedef long long ll;
+
+const ll INF = 1e7;
+const ll MOD = 1e9 + 7;
+const ll MAXN = 2e5 + 1;
+
+ll fact[MAXN];
+void precompute()
+{
+   fact[0] = 1;
+   for (ll i = 1; i < MAXN; i++) {
+       fact[i] = (i * fact[i - 1]) % MOD;
+   }
+}
+
+ll powmod(ll a, ll b){
+    a %= MOD;
+    if (a == 0) return 0;
+    ll product = 1;
+    while(b > 0){
+        if (b&1){    // you can also use b % 2 == 1
+            product *= a;
+            product %= MOD;
+            --b;
+        }
+        a *= a;
+        a %= MOD;
+        b /= 2;    // you can also use b >> 1
+    }
+    return product;
+}
+
+ll max(ll a, ll b) {
+    if (a > b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+
+ll min(ll a, ll b) {
+    if (a < b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+
+
+//calculates the inverse of a number mod MOD
+ll inv(ll a) {
+    return powmod(a, MOD - 2);
+}
+
+ll n, k;
+vector<ll> adj[MAXN];
+
+//depth and parent of each node
+ll dp[MAXN]; ll par[MAXN];
+
+//Compute the depth and parent of each node
+void dfs(ll node, ll pa) {
+    par[node] = pa;
+    for (auto el: adj[node]) {
+        if (el == pa) {
+            continue;
+        }
+        
+        dp[el] = 1 + dp[node];
+        dfs(el, node);
+    }
+}
+
+//mark[i] is true if node i is a marked goal node for any leaf
+bool mark[MAXN];
+
+//Run a top-down dfs to greedily count the minimum number of goal nodes we need to make sure Bessie can't access any leaf nodes
+ll dfs2(ll node) {
+    ll ret = 0;
+    for (auto el: adj[node]) {
+        if (el == par[node]) {
+            continue;
+        }
+        
+        if (mark[el]) {
+            ret++;
+        } else {
+            ret += dfs2(el);
+        }
+    }
+    return ret;
+}
+
+//Observation: If Bessie starts at an exit, then obviously only 1 farmer is needed. Otherwise we can root the tree at Bessie's node
+//Observation: Let's place a farmer at every single leaf (exit). Now let's compute the distance from each leaf to the root. Note that for a given leaf that it will have to move up distance/2 edges where
+//distance is the distance of a given leaf to the root. If we mark this goal node for every single leaf, we notice that we have some redundancies. Some subtrees are rooted at a marked node, so we only
+//need 1 farmer to handle this subtree since it'll manage to get there before Bessie gets there and successfully protect all of the leaves of the subtree.
+
+//Algorithm: First compute the depth of each node. Then use multi-source BFS starting from the leaves to mark all goal nodes. Finally run a top-down DFS to count the minimum #of goal nodes such that the goal nodes
+//we select cover all the extra redundant goal nodes.
+
+void solve(ll ca) {
+    //Read in input
+    cin >> n >> k;
+    k--;
+    
+    for (ll i = 0; i < n-1; i++) {
+        ll a, b;
+        cin >> a >> b;
+        a--; b--;
+        adj[a].push_back(b);
+        adj[b].push_back(a);
+    }
+    
+    //If Bessie is already at an exit, we only need 1 farmer
+    if (adj[k].size() == 1) {
+        cout << 1 << endl;
+        return;
+    }
+    
+    //Compute the depth and parent of each node
+    dp[k] = 0;
+    dfs(k, -1);
+    
+    
+    //Run a BFS from the leaves
+    ll dist[MAXN]; //dist[i] is the largest amount of distance we will need to go past node i to mark a goal node. This ensures that we avoid continuing the path of redundant farmers who will never go
+    //up as far into the subtree as others have.
+    
+    queue<pair<ll, ll>> q;
+    for (ll i = 0; i < n; i++) {
+        //Initialize mark and dist
+        mark[i] = false;
+        dist[i] = -1;
+        
+        //If the node is a leaf, we will need to move up depth/2 edges
+        if (adj[i].size() == 1) {
+            q.push({i, dp[i]/2});
+        }
+    }
+    
+    //Run mutli-source BFS
+    while (!q.empty()) {
+        pair<ll, ll> cur = q.front();
+        q.pop();
+        
+        //If this node hasn't been visited, visit it.
+        if (dist[cur.first] == -1) {
+            dist[cur.first] = cur.second;
+            
+            //If the current node is a goal node, mark it and end our journey with the current farmer
+            if (cur.second == 0) {
+                mark[cur.first] = true;
+                continue;
+            }
+        } else if (dist[cur.first] < cur.second) { //We can go even higher through this subtree, so do so
+            dist[cur.first] = cur.second;
+        } else { //No point going further
+            continue;
+        }
+        
+        //Go up one edge and reduce the distance needed to reach the goal node
+        q.push({par[cur.first], cur.second-1});
+    }
+    
+    //Greedily find and print the minimum #of goal nodes we need
+    ll ans = dfs2(k);
+    cout << ans << endl;
+}
+
+int main() {
+    mt19937 rng(0);
+    // Fast IO
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    freopen("atlarge.in", "r", stdin);
+    freopen("atlarge.out", "w", stdout);
+    
+    ll t = 1;
+    //cin >> t;
+    
+    ll co = 0;
+    while (t--) {
+        solve(co);
+        co++;
+    }
+}

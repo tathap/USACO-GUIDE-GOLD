@@ -1,0 +1,136 @@
+BFS-DFS
+https://csacademy.com/contest/archive/task/bfs-dfs/statement/
+
+Code:
+#include <iostream>
+#include <fstream>
+#include <algorithm>
+#include <vector>
+#include <stack>
+#include <queue>
+#include <math.h>
+#include <set>
+#include <map>
+#include <string>
+#include <tuple>
+#include <numeric>
+#include <climits>
+#include <bitset>
+#include <iomanip>
+#include <random>
+#include <ctime>
+using namespace std;
+
+typedef long long ll;
+
+const ll MOD = 1e9 + 7;
+const ll MAXN = 1e6 + 1;
+
+ll fact[MAXN];
+void precompute()
+{
+   fact[0] = 1;
+   for (ll i = 1; i < MAXN; i++) {
+       fact[i] = (i * fact[i - 1]) % MOD;
+   }
+}
+
+ll powmod(ll a, ll b){
+    a %= MOD;
+    if (a == 0) return 0;
+    ll product = 1;
+    while(b > 0){
+        if (b&1){    // you can also use b % 2 == 1
+            product *= a;
+            product %= MOD;
+            --b;
+        }
+        a *= a;
+        a %= MOD;
+        b /= 2;    // you can also use b >> 1
+    }
+    return product;
+}
+
+ll max(ll a, ll b) {
+    if (a > b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+
+ll min(ll a, ll b) {
+    if (a < b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+
+
+//calculates the inverse of a number mod MOD
+ll inv(ll a) {
+    return powmod(a, MOD - 2);
+}
+
+//Observation: If n is 1, then we have a solution with 0 edges. Otherwise there is only one condition that causes
+//an invalid solution. If bfs[1] != dfs[1] (both 0-indexed), then there is no solution since node 1 will go to the same
+//second node for both the bfs and dfs.
+
+//Now we can construct a valid solution. We will first add all the edges between dfs[i] and dfs[i+1]. This will satisfy the dfs order requirement.
+//To satisfy the bfs order requirement, we will add all the edges between node 1 and node bfs[i] for i >= 2 (0-indexed) in increasing order of i.
+//These edges in this order ensures that both the dfs and bfs requirement are satisfied.
+
+void solve(ll ca) {
+    ll n;
+    cin >> n;
+    
+    ll bfs[n], dfs[n];
+    for (ll i = 0; i < n; i++) {
+        cin >> bfs[i];
+    }
+    for (ll i = 0; i < n; i++) {
+        cin >> dfs[i];
+    }
+    
+    if (n == 1) {
+        cout << 0 << endl;
+        return;
+    }
+    
+    if (bfs[1] != dfs[1]) {
+        cout << -1 << endl;
+        return;
+    }
+    
+    //If you draw some diagrams, it's obvious that this is the # of edges that will be utilized in the above configuration
+    cout << 2*n - 3 << endl;
+    
+    for (ll i = 1; i < n; i++) {
+        cout << dfs[i-1] << " " << dfs[i] << endl;
+    }
+    
+    for (ll i = 2; i < n; i++) {
+        cout << 1 << " " << bfs[i] << endl;
+    }
+}
+
+int main() {
+    mt19937 rng(0);
+    // Fast IO
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    /*
+    freopen("help.in", "r", stdin);
+    freopen("help.out", "w", stdout);
+    */
+    ll t = 1;
+    //cin >> t;
+    
+    ll co = 0;
+    while (t--) {
+        solve(co);
+        co++;
+    }
+}
